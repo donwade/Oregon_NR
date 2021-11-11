@@ -2,108 +2,108 @@
 #ifndef Oregon_NR_h
 #define Oregon_NR_h
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-------------------------------------------------------------------------------------------------------------------------------------------------
 // This file is part of the Arduino OREGON_NR library.
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+-------------------------------------------------------------------------------------------------------------------------------------------------
+/-
 // The MIT License (MIT)
-//
+/-
 // Copyright (c) 2021 Sergey Zawislak 
-//
+/-
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 // to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
 // and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-//
+/-
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-//
+/-
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  Этот файл - часть библиотеки OREGON_NR
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2021 Сергей Зависляк
-//
-// Данная лицензия разрешает лицам, получившим копию данного программного обеспечения и сопутствующей документации 
-// (в дальнейшем именуемыми «Программное Обеспечение»), безвозмездно использовать Программное Обеспечение без ограничений,
-// включая неограниченное право на использование, копирование, изменение, слияние, публикацию, распространение, сублицензирование
-// и/или продажу копий Программного Обеспечения, а также лицам, которым предоставляется данное Программное Обеспечение, при соблюдении следующих условий:
-//
-// Указанное выше уведомление об авторском праве и данные условия должны быть включены во все копии или значимые части данного Программного Обеспечения.
-//
-// ДАННОЕ ПРОГРАММНОЕ ОБЕСПЕЧЕНИЕ ПРЕДОСТАВЛЯЕТСЯ «КАК ЕСТЬ», БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ, ЯВНО ВЫРАЖЕННЫХ ИЛИ ПОДРАЗУМЕВАЕМЫХ, ВКЛЮЧАЯ ГАРАНТИИ ТОВАРНОЙ 
-// ПРИГОДНОСТИ, СООТВЕТСТВИЯ ПО ЕГО КОНКРЕТНОМУ НАЗНАЧЕНИЮ И ОТСУТСТВИЯ НАРУШЕНИЙ, НО НЕ ОГРАНИЧИВАЯСЬ ИМИ. НИ В КАКОМ СЛУЧАЕ АВТОРЫ ИЛИ ПРАВООБЛАДАТЕЛИ 
-// НЕ НЕСУТ ОТВЕТСТВЕННОСТИ ПО КАКИМ-ЛИБО ИСКАМ, ЗА УЩЕРБ ИЛИ ПО ИНЫМ ТРЕБОВАНИЯМ, В ТОМ ЧИСЛЕ, ПРИ ДЕЙСТВИИ КОНТРАКТА, ДЕЛИКТЕ ИЛИ ИНОЙ СИТУАЦИИ, 
-// ВОЗНИКШИМ ИЗ-ЗА ИСПОЛЬЗОВАНИЯ ПРОГРАММНОГО ОБЕСПЕЧЕНИЯ ИЛИ ИНЫХ ДЕЙСТВИЙ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ. 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+-------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------
+//This file is part of the OREGON_NR library
+-------------------------------------------------------------------------------------------------------------------------------------------------
+/-
+//Copyright (c) 2021 Sergey Zavislyak
+/-
+//This license permits individuals who have received a copy of this software and related documentation
+//(hereinafter referred to as the "Software"), use the Software free of charge without restrictions,
+//including unlimited right to use, copy, modify, merge, publish, distribute, sublicense
+//and / or sale of copies of the Software, as well as to persons to whom the Software is provided, subject to the following conditions:
+/-
+//The above copyright notice and these terms and conditions must be included in all copies or significant portions of this Software.
+/-
+//THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTY
+//FITNESS, FITNESS FOR ITS SPECIFIC PURPOSE AND NON-VIOLATION, BUT NOT LIMITED TO THEM. IN NO EVENT SHOULD THE AUTHORS OR RIGHT HOLDERS
+//SHALL NOT BE LIABLE FOR ANY CLAIMS, DAMAGES OR OTHER REQUIREMENTS, INCLUDING, IN THE ACTION OF A CONTRACT, DELICATE OR OTHER SITUATION,
+//ARISED DUE TO THE USE OF THE SOFTWARE OR OTHER ACTION WITH THE SOFTWARE.
+-------------------------------------------------------------------------------------------------------------------------------------------------
+/-
 
-// Распознавание пакетов от следующих датчиков Oregon Scientific:
-//
-#define THGN132   0x1D20 // Температура, влажность, 3 канала,
-#define THGN500   0x1D30 // Температура, влажность, 
-#define THN132    0xEC40 // Температура,  3 канала,
-#define RTGN318   0x0CC3 // Температура, влажность, время, 5 каналов,
-#define RTHN318   0x0CD3 // Температура, время, 5 каналов,
+//Recognize packets from the following Oregon Scientific sensors:
+/-
+#define THGN132   0x1D20 //Temperature, humidity, 3 channels,
+#define THGN500   0x1D30 //Temperature, humidity,
+#define THN132    0xEC40 //Temperature, 3 channels,
+#define RTGN318   0x0CC3 //Temperature, humidity, time, 5 channels,
+#define RTHN318   0x0CD3 //Temperature, time, 5 channels,
 #define RFCLOCK   0x0CF3 //  
-#define BTHGN129  0x5D53 // Температура, влажность, давление, 5 каналов,
-#define BTHR968   0x5D60 // Температура, влажность, давление,
-#define THGR810   0xF824 // Температура, влажность, 10 каналов,
-#define THN800	  0xC844 // Температура,  3 канала,
-#define WGR800	  0x1984 // Направление и скорость ветра
-#define UVN800	  0xD874 // УФ-индекс, освещённость (спасибо XOR за предоставленные данные). 
-#define PCR800	  0x2914 // счётчик осадков
+#define BTHGN129  0x5D53 //Temperature, humidity, pressure, 5 channels,
+#define BTHR968   0x5D60 //Temperature, humidity, pressure,
+#define THGR810   0xF824 //Temperature, humidity, 10 channels,
+#define THN800	  0xC844 //Temperature, 3 channels,
+#define WGR800	  0x1984 //Wind direction and speed
+#define UVN800	  0xD874 //UV index, illuminance (thanks to XOR for the data provided).
+#define PCR800	  0x2914 //precipitation counter
 
-//
-// Датчики собственной разработки:
-#define THP	  0x5500 // Температура, влажность, атм давление, 8 каналов, работа от 3-ех батарей АА, (документация прилагается)
-#define GAS       0xAA00 // Температура, влажность, концентрация СО и CH4, 8 каналов,
-#define FIRE      0xBB00 // Контроль сигналов пожарных линий датчиков ИП212-22 и ИП212-72
-#define CURRENT   0xEE00 // Ток, напряжение, 8 каналов,
-#define CAPRAIN   0x8800 // Емкостной всепогодный датчик осадков
-//
-//Этими параметрами можно поиграть для экономии ресурсов
-#define ADD_SENS_SUPPORT 1      // Поддежка дополнительных типов датчиков собственной разработки - отключение незначительно экономит ОЗУ
+/-
+//Proprietary sensors:
+#define THP	  0x5500 //Temperature, humidity, atm pressure, 8 channels, operation from 3 AA batteries, (documentation is attached)
+#define GAS       0xAA00 //Temperature, humidity, concentration of CO and CH4, 8 channels,
+#define FIRE      0xBB00 //Control of signals of fire lines of sensors IP212-22 and IP212-72
+#define CURRENT   0xEE00 //Current, voltage, 8 channels,
+#define CAPRAIN   0x8800 //Capacitive all-weather precipitation sensor
+/-
+//These parameters can be played to save resources.
+#define ADD_SENS_SUPPORT 1      //Support for additional types of sensors of our own design - disabling slightly saves RAM
 
-//
-// Этими параметрами можно поиграть для настройки наилучшего приёма
+/-
+//These parameters can be played to tune the best reception
 
-#define MAX_LENGTH2 976		 // Максимальная длина импульса преамбулы v2 - не меньше периода, чтобы ловился сигнал от разных эмуляторов
-#define MIN_LENGTH2 883          // Минимальная длина импульса при захвате (для v2 импульсы укорочены на 93мкс), т.е. должна быть не больше 883мкс,
+#define MAX_LENGTH2 976		 //The maximum pulse length of the preamble v2 is not less than the period so that the signal from different emulators is caught
+#define MIN_LENGTH2 883          //The minimum pulse length during capture (for v2, the pulses are shortened by 93 μs), i.e. should be no more than 883μs,
 				
-#define MAX_LENGTH3 488         // Максимальная длина импульса преамбулы v3 - не меньше полупериода, чтобы ловился сигнал от разных эмуляторов
-#define MIN_LENGTH3 330         // Минимальная длина импульса при захвате (для v2 импульсы укорочены на 138мкс), т.е. должна быть не больше 350мкс,
+#define MAX_LENGTH3 488         //The maximum pulse length of the preamble v3 is not less than half a period, so that the signal from different emulators is caught
+#define MIN_LENGTH3 330         //The minimum pulse length during capture (for v2, the pulses are shortened by 138μs), i.e. should be no more than 350μs,
 
-#define LENGTH_TOLERANCE 100     // Допустимое отклонение для длины импульса. Зависит от приёмника
-                                // В зависимости от уровня сигнала может "плавать длина импульсов"
+#define LENGTH_TOLERANCE 100     //Tolerance for pulse length. Depends on the receiver
+                                //Depending on the signal level, the pulse length may "float"
 
-#define CATCH_PULSES 3		// Сколько искать правильных импульсов для начала захвата. Рекомендовано 2 - 4. 
-                                // Больше - можно не поймать пакет в условиях сильных шумов
-                                // Меньше - можно пропустить пакет, сильно отвлекаясь на анализ шумов
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////                           
-//Эти параметры трогать не надо!
+#define CATCH_PULSES 3		//How many to look for the correct impulses to start capturing. Recommended 2 - 4.
+                                //More - you may not catch a packet in a loud noise environment
+                                //Less - you can skip a packet, being heavily distracted by noise analysis
+------------------------------------------------------------------------------------------------------------------------------------------------/                           
+//Do not touch these parameters!
 
-#define IS_ASSEMBLE 1           // Пытаться ли собрать из двух повреждённых пакетов один целый (для v2) - отключение сильно экономит ОЗУ!
+#define IS_ASSEMBLE 1           //Whether to try to collect one whole from two damaged packages (for v2) - disabling greatly saves RAM!
 
 
-#define PACKET_LENGTH 26        // Длина пакета в ниблах без учёта преамбулы и синхронибла,
-                 		// максимальная у PCR800 - 22 нибла
-                                //ДЛя захвата более длинных пакетов можно увеличить 
+#define PACKET_LENGTH 26        //The length of the packet in nibls excluding the preamble and sync.,
+                 		//maximum for PCR800 - 22 nibls
+                                //To capture longer packets, you can increase the
 
 
 #define READ_BITS ((PACKET_LENGTH + 8) * 4)	
 
-                         	// Максимальная длина пакета в битах
-                                // преамбула для v2 - 5 ниблов(FFFFA), самый длинный пакет - 19ниблов (THGN132)
+                         	//Maximum packet length in bits
+                                //preamble for v2 - 5 nibls (FFFFA), the longest packet - 19nibls (THGN132)
 				//итого (19 + 5) * 4 = 96 бит
-                                //преамбула для v3 - 7 ниблов(FFFFFFA), самый длинный пакет - 22нибла PCR900
+                                //preamble for v3 - 7 nibls (FFFFFFA), the longest packet - 22 nibls PCR900
 				//итого (22 + 7) * 4 = 116 бит
 
 #define READ_TACTS ((PACKET_LENGTH + 6) * 8)
-                		// Максимальная длина пакета в такта
+                		//Maximum packet length per step
                                 // v2 - 96 * 2 = 192
                                 // v3 - 116 = 116
 
@@ -112,7 +112,7 @@
 
 #define FIND_PACKET   1           
 #define ANALIZE_PACKETS 2
-#define PER_LENGTH2 976		// Период передачи данных. Для v2 и v3 976,56мкс (1024Гц)
+#define PER_LENGTH2 976		//Data transfer period. For v2 and v3 976.56μs (1024Hz)
 #define PER_LENGTH3 488
 
 
@@ -128,7 +128,7 @@ class Oregon_NR
     bool is_assemble = IS_ASSEMBLE;
     bool no_memory = false;
 
-    //Данные датчика
+    //Sensor data
     word sens_type;               //Sensor type
 
 
@@ -141,35 +141,35 @@ class Oregon_NR
 
     byte ver = 0;                 //Protocol version
 
-    bool crc_c = 0;               //CRC check result. Сбрасывается при захвате. Выставляется при приёме корректного пакета.
-    bool captured = 0;            //Capture data flag. Выставляется, если были считаны данные в память.
+    bool crc_c = 0;               //CRC check result. Resets on capture. Exposed when the correct packet is received.
+    bool captured = 0;            //Capture data flag. Exposed if data was read into memory.
 
     unsigned long work_time;      //Capture time
     byte* packet;   //Result packet
-    byte* valid_p;  //Validity mask - маска уверенного распознавания битов
+    byte* valid_p;  //Validity mask - mask of confident bit recognition
     byte packets_received = 0;    //Number of received packets in block (0...2)
-    byte received_CRC;            //Calculated СRC 
+    byte received_CRC;            //Calculated СRC
     
-    Oregon_NR(byte, byte);          //Конструктор. Параметры:
-    Oregon_NR(byte, byte, byte, bool);    //(вывод приёмника, номер прерывания, вывод светодиода, pull up)
-    Oregon_NR(byte, byte, byte, bool, int, bool);    //(вывод приёмника, номер прерывания, вывод светодиода, pull up, размер буфера)
+    Oregon_NR(byte, byte);          //Constructor. Options:
+    Oregon_NR(byte, byte, byte, bool);    //(receiver pin, interrupt number, LED pin, pull up)
+    Oregon_NR(byte, byte, byte, bool, int, bool);    //(sink pin, interrupt number, LED pin, pull up, buffer size)
     void start();                 //Star listening receiver
-    void stop();                  //Stop listening receiver. Чтобы не занимал процессор, когда не нужен
+    void stop();                  //Stop listening receiver. So as not to occupy the processor when not needed
     void capture(bool);           //Capture packet. if parameter is true function dumps capture data to Serial.
 
-    bool consist_synchro = false; //При поиске синхронибла опираться подтверждённые или сомнительные данные?
+    bool consist_synchro = false; //When searching for synchronization to rely on confirmed or questionable data?
     
-    byte empty_space = 3;         //Какое количество "пустых" тактов нужно для определения конца посылки?
-                                  //Параметр определяется уровнем сигнала и скоростью АРУ приёмника.
-                                  //Чем они лучше, тем меньше число. НО меньше двух не рекомендуется
-				  //В сатрой версии было 5
-    bool catch2 = 1, catch3 = 1;  //какие версии протокола принимать
-    int timing_correction = 0;   //Коррекция частоты приёма (от -10 до +10)
-    byte decode_method = 3;      // Метод декодирования тактов
-                                 //1 - традиционный
-                                 //3 - при девиации частоты 
+    byte empty_space = 3;         //How many "empty" bars are needed to determine the end of a message?
+                                  //The parameter is determined by the signal level and the AGC speed of the receiver.
+                                  //The better they are, the lower the number. BUT less than two is not recommended
+				  //The satra version had 5
+    bool catch2 = 1, catch3 = 1;  //which protocol versions to accept
+    int timing_correction = 0;   //Receive frequency correction (from -10 to +10)
+    byte decode_method = 3;      //Clock decoding method
+                                 //1 - traditional
+                                 //3 - with frequency deviation
 
-    //Ветрометр
+    //Wind meter
     float sens_avg_ws, sens_max_ws;
     byte  sens_wdir;
     float get_avg_windspeed(byte*);
@@ -179,38 +179,38 @@ class Oregon_NR
     byte UV_index, lightness;
     byte get_UV(byte*);
     byte get_light(byte*);
-    //счётчик осадков
+    //precipitation counter
     float get_total_rain();
     float get_rain_rate();
-    //Барометр
+    //Barometer
     float get_pressure();
 
-    byte restore_sign;            //Битовое поле, инормирующее об успешных способах реставрации пакета
+    byte restore_sign;            //Bit field informing about successful methods of package restoration
 
-                                  //0 - восстановлены одиночные такты
-                                  //1 - восстановлены двойные такты
-                                  //2 - исправление версии протокола при разборке пакета
-                                  //3 - восстановлено методом сращивания (v2) - отключено для экономии ресурсов
+                                  //0 - single ticks restored
+                                  //1 - double ticks restored
+                                  //2 - correction of the protocol version when disassembling the package
+                                  //3 - recovered by splicing (v2) - disabled to save resources
 
-    bool receiver_dump = 0;       //Сбрасывать ли дамп канала в Serial. работает тольок если capture(true)
-                                  // фактически это осциллограмма огибающей сигнала с приёмника
-                                  // Также выводятся тактовые последовательности до и после восстановления
+    bool receiver_dump = 0;       //Whether to dump the channel to Serial. only works if capture (true)
+                                  //in fact, this is an oscillogram of the envelope of the signal from the receiver
+                                  //Clock sequences before and after recovery are also displayed.
     unsigned long pulse1, pulse2, pulse3;
 
 #if ADD_SENS_SUPPORT == 1
     float sens_pressure,          //Pressure
-    sens_voltage,                 // напряжение в В (for CURRENT и THP sensors)
+    sens_voltage,                 //voltage in V (for CURRENT and THP sensors)
     sens_tmp2;                    //Temperature2  (for GASv2 sensor)
     byte sens_CO,                 //CO (ppm*10) (for GASv2 sensor)
     sens_CH;                      //CH4 (ppm*100)(ppm)
     byte sens_ip22,               //IP22 channel data (for FIRE sensor)
     sens_ip72,                    //IP72 channel data (for FIRE sensor)         
     sens_lockalarm;               //LOCK_ALARM channel data (for FIRE sensor)
-    float sens_current;           // ток в А (for CURRENT sensor)
+    float sens_current;           //current in A (for CURRENT sensor)
     
-    word  sens_pump_count;        // счётчик насоса
-    unsigned long sens_drop_counter;// счётчик капель (for CAPRAIN sensor)
-    int sens_capacitance;         //Емкость сенсора (for CAPRAIN sensor)
+    word  sens_pump_count;        //pump meter
+    unsigned long sens_drop_counter;//drop counter (for CAPRAIN sensor)
+    int sens_capacitance;         //Sensor capacity (for CAPRAIN sensor)
 #endif                                  
     bool check_oregon_crcsum(byte*, byte , byte , byte, bool );
 
@@ -218,39 +218,39 @@ class Oregon_NR
 
     
     byte read_tacts, read_tacts2, result_size;
-    byte LED = 0xFF;            //вывод светодиода, который мигает при приёме
-    bool PULL_UP;               //куда подключён светодиод
-    byte packet_number = 0;     //Количесвто принятых пакетов в посылке  
-    int INT_NO;                 //Номер прерывания приёмника
-    //bool  reciever_ctrl = true; //Флаг контроля ресивера (выставляется при приходе импулься, сбрасывается в таймере)
+    byte LED = 0xFF;            //LED output that blinks when receiving
+    bool PULL_UP;               //where is the LED connected
+    byte packet_number = 0;     //The number of received packets in the parcel
+    int INT_NO;                 //Receiver interrupt number
+    //bool reciever_ctrl u003d true; // Receiver control flag (set when an impulse arrives, cleared in the timer)
 
-    //Массивы данных для записи данных с канала и полученных битов
-    byte* decode_tacts;        //Массив тактов. значения
-    //                          0=ноль
-    //                          1=единица
-    //                          2=неизвестен
-    //                          3=переход+
-    //                          4=переход-
+    //Data arrays for recording data from the channel and received bits
+    byte* decode_tacts;        //Array of ticks. meaning
+    //0 u003d zero
+    //1 u003d unit
+    //2 u003d unknown
+    //3 u003d transition +
+    //4 u003d transition
 
-    byte* collect_data;         //Память для сбора данных с приёмника
+    byte* collect_data;         //Receiver data collection memory
 #if IS_ASSEMBLE
     byte* collect_data2;
 #else
     byte* collect_data2;
 #endif
-    //А когда становится массивом полученных битов, то значения такие:
-    //                          128 - неизвестен
-    //                          >128 - единица
-    //                          <128 - ноль
+    //And when it becomes an array of received bits, then the values are:
+    //128 - unknown
+    //> 128 - one
+    //<128 - zero
 
     byte receive_status = FIND_PACKET;
     byte start_pulse_cnt = 0;
     unsigned long pulse_length, timer_marklong;  
     unsigned long pulse_marker, right_pulse_marker;
-    unsigned long pre_marker; // Для хранения временных меток преамбулы при захвате пакета
+    unsigned long pre_marker; //To store preamble timestamps when capturing a packet
     unsigned long first_packet_end;
-    int data_val, data_val2;        // Качество пакетов
-    int synchro_pos, synchro_pos2; // Позиции синхрониблов в записи
+    int data_val, data_val2;        //Package quality
+    int synchro_pos, synchro_pos2; //Synchronous positions in the recording
     
     byte get_gas_CH(byte* gas_data);
     byte get_gas_CO(byte* gas_data);

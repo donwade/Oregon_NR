@@ -2,44 +2,44 @@
 #include <Oregon_TM.h>
 #include <BME280I2C.h>
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//Скетч для устройства, передающего данные датчика BME280 в формате Oregon Scientific THGN132N
-//Принципиальная схема прилагается.
-//Для работы необходима библиотека https://github.com/finitespace/BME280/
-//Устройство работает от 3-ех пальчиковых батареек, для экономии электричества заливать скетч нужно через ISP
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//Также возможна передача данных в формате - THP (температура, влажность, давление, напряжение батареи)
-//Пример с приёмником поддерживает расшифоовку THP
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
+------------------------------------------------------------------------------------------------------------
+//Oregon Scientific THGN132N BME280 Transmitter Sketch
+//The schematic diagram is attached.
+//To work, you need a library https://github.com/finitespace/BME280-
+//The device is powered by 3 AA batteries, to save electricity, you need to fill in the sketch via ISP
+------------------------------------------------------------------------------------------------------------
+//It is also possible to transfer data in the format - THP (temperature, humidity, pressure, battery voltage)
+//Receiver example supports THP decoding
+------------------------------------------------------------------------------------------------------------
 
-# define THGN_SEND        0  // Передавать ли данные в формате THGN132
-# define THP_SEND         1  // Передавать ли данные в формате THP
-# define DEVICE_LOG       0   //Писать ли лог В Serial
+# define THGN_SEND        0  //Whether to transmit data in THGN132 format
+# define THP_SEND         1  //Whether to transmit data in THP format
+# define DEVICE_LOG       0   //Whether to write a log to Serial
 
-# define DONE_PIN         15      // вывод сигнала об окончании работы на таймер
+# define DONE_PIN         15      //output of the signal about the end of work on the timer
 
-# define BME_WAIT         10      // Сколько мс ожидать датчик BME
-# define BATTERY_THR      3.5     // Порог напряжения для выставляения флага разряда батарейки (THGN)
+# define BME_WAIT         10      //How many ms to wait for BME sensor
+# define BATTERY_THR      3.5     //Voltage threshold for setting the low battery flag (THGN)
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-//Ниблы датчика THP
-//Во всех полях младшие ниблы идут вперёд!!!
-// 1-2    - тип (55)
-// 3      - канал (0-7)
+-------------------------------------------------------------------------------------------------
+//THP sensor nibles
+//Minor nibls go forward in all fields !!!
+//1-2 - type (55)
+//3 - channel (0-7)
 // 4-6    - (температура от -100С) * 10. Т.е. +25.1С = 1251 = 4E3h 
 // 7-9    - Влажность *10 Т.е. 25.1% = 251 = 0FBh
 // 10-12  - (давление от 500ммртст) * 10. Т.е. 765мм = 2650 = A5Ah
-// 13-15  - данные с АЦП (A0)
+//13-15 - data from ADC (A0)
 // 16-17  - CheckSUM 
 // 18-19  - CRC8 (poly 0x07 start 0x00)
-/////////////////////////////////////////////////////////////////////////////////////////////////
+-------------------------------------------------------------------------------------------------
 
 Oregon_TM transmitter(4);
 BME280I2C bme;  
 
 bool  bme_present = false;
 float bme_temp(NAN), bme_hum(NAN), bme_pres(NAN);
-/////////////////////////////////////////////////////////////////////////////////////////////////
+-------------------------------------------------------------------------------------------------
 
 void setup()
   {
@@ -51,7 +51,7 @@ void setup()
     Serial.println("Waiting for BMEsensor...");
 #endif
 
-    //Обмен данными с BME//////////////////////////////////
+    //Communication with BME -------------------------------- / -
     Wire.begin();
     while(!bme.begin())
     {
@@ -92,14 +92,14 @@ void setup()
       }
     }
 
-    //Напряжения батареи///////////////////////////////////////////
+    //Battery Voltages -------------------------------------------
     word battvotage = (word)(((float)(1.1 * 16368) / Vbg()) * 100);
 #ifdef DEVICE_LOG
     Serial.print("Battery voltage = ");
     Serial.println(battvotage,HEX);
 #endif
     
-    //Подготовка и отправка данных THGN//////////////////////////////////////
+    //Preparing and Sending THGN Data ------------------------------------ / -
     transmitter.protocol == 2;
     if (THGN_SEND)
     {
@@ -125,10 +125,10 @@ void setup()
       transmitter.SendPacket();
     }
     
-    // Если отправляются оба формата пакетов, межу ними надо выдержать паузу
+    //If both packet formats are sent, a pause must be paused between them.
     if (THP_SEND && THGN_SEND) delay(100);
     
-    //Подготовка и отправка данных THP//////////////////////////////////////
+    //Preparing and sending THP data ------------------------------------ / -
     if (THP_SEND)
     {
       transmitter.setType(THP);
@@ -138,7 +138,7 @@ void setup()
       {
         transmitter.setTemperatureTHP(bme_temp);
         transmitter.setHumidityTHP(bme_hum);  
-        transmitter.setPressureTHP(bme_pres * 0.75);  // перевод Pa в mmHg
+        transmitter.setPressureTHP(bme_pres * 0.75);  //converting Pa to mmHg
       }
       else
       {
@@ -153,12 +153,12 @@ void setup()
     Serial.println("ms");
     Serial.println();
 #endif
-    //Команда на отключение питания
+    //Power off command
     digitalWrite(DONE_PIN, HIGH);
   }
-/////////////////////////////////////////////////////////////////////////////////////////////////
+-------------------------------------------------------------------------------------------------
 void loop(){}
-/////////////////////////////////////////////////////////////////////////////////////////////////
+-------------------------------------------------------------------------------------------------
 int Vbg() { 
   ADMUX = (1<<REFS0)|(0<<REFS1)|(1<<MUX3)|(1<<MUX2)|(1<<MUX1)|(0<<MUX0);
   long buffersamp=0;
@@ -167,6 +167,6 @@ int Vbg() {
   while (bit_is_set(ADCSRA,ADSC));
   buffersamp += ADC; }
   buffersamp >>=4; //16368 full scale 14bit
-  ADCSRA &= ~(1 << ADEN);  // отключаем АЦП
+  ADCSRA &= ~(1 << ADEN);  //turn off the ADC
   return buffersamp;
 }

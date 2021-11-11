@@ -1,26 +1,26 @@
 #include <Oregon_NR.h>
 #include <Oregon_TM.h>
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// В данном примере описан ретранслятор пакетов 
-// Может быть полезен для увеличения дальности приёма сигналов от некоторых датчиков
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define LED 13             //вывод светодиода
-#define MAX_SEND_BUFFER 30 //максимальный размер буфера передачи в ниблах
-Oregon_NR oregon(2, 0, 255, true, MAX_SEND_BUFFER, true);   // Приёмник на D2, прерывание 0, светодиод не нужен, буфера на 30 ниблов, сборка пакетов включена
-Oregon_TM transmitter(4, MAX_SEND_BUFFER);   // Передатчик на D4, буфер на 30 ниблов
+---------------------------------------------------------------------------------------------------------------------------------------------------
+//This example describes a packet relay
+//May be useful for increasing the range of signal reception from some sensors
+---------------------------------------------------------------------------------------------------------------------------------------------------
+#define LED 13             //LED output
+#define MAX_SEND_BUFFER 30 //maximum size of the transmit buffer in nibls
+Oregon_NR oregon(2, 0, 255, true, MAX_SEND_BUFFER, true);   //Receiver on D2, interrupt 0, no LED needed, 30 nib buffers, packet build on
+Oregon_TM transmitter(4, MAX_SEND_BUFFER);   //D4 transmitter, 30 nibs buffer
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------------------------------------------------------
 void(* resetFunc) (void) = 0;
 
 void setup() {
    Serial.begin(115200);
-   oregon.start();        // Включаем приёмник
+   oregon.start();        //Turn on the receiver
    pinMode(LED, OUTPUT);
    digitalWrite(LED,LOW);
    Serial.println("START");
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------------------------------------------------------
 void loop() {
   
   oregon.capture(0);
@@ -37,9 +37,9 @@ void loop() {
       }
       else break;
     }
-    //Проверяем, нужно ли этот пакет ретранслировать
+    //Checking if this packet needs to be relayed
     if ((oregon.packet[0] == 0x0E && oregon.packet[1] == 0x0C)
-    //Например, нам нужно ретранслировать пакет, если первые два нибла пакета 19h (датчик WGR800)
+    //For example, we need to retransmit a packet if the first two nibbles of the packet are 19h (WGR800 sensor)
      || (oregon.packet[0] == 0x01 && oregon.packet[1] == 0x09)
      || (oregon.packet[0] == 0x05 && oregon.packet[1] == 0x05)
      || (oregon.packet[0] == 0x01 && oregon.packet[1] == 0x0D))
@@ -49,22 +49,22 @@ void loop() {
       delay(500); 
 
         
-      //Подготавливаем буфер передачи
-      //Добавляем в хвост флаг, что это ретранслируемый пакет
+      //Preparing the transfer buffer
+      //Add a flag to the tail that this is a relayed packet
       oregon.packet[transmitter.buffer_size] = 0x00;
       transmitter.buffer_size ++;
       oregon.packet[transmitter.buffer_size] = 0x00;
       transmitter.buffer_size ++;
-      //переписываем буфер в передатчик
+      //rewrite the buffer to the transmitter
       if (transmitter.buffer_size > MAX_SEND_BUFFER) transmitter.buffer_size = MAX_SEND_BUFFER;
-      //Переписываем буфер из приёмника в передатчик
+      //We rewrite the buffer from the receiver to the transmitter
       for ( int q = 0; q < transmitter.max_buffer_size; q++)
         transmitter.SendBuffer[q] = oregon.packet[q*2+1] + oregon.packet[q*2]*16;        
 
-      //Будем передавать в том же протоколе, что и приняли
+      //We will transmit in the same protocol as we received
       transmitter.protocol = oregon.ver;
         
-      //Передаём данные
+      //We transfer data
       digitalWrite(13,HIGH);
       transmitter.SendPacket();
       digitalWrite(13,LOW);

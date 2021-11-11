@@ -1,47 +1,47 @@
 #include "Oregon_TM.h"
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-------------------------------------------------------------------------------------------------------------------------------------------------
 // This file is part of the Arduino OREGON_NR library.
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+-------------------------------------------------------------------------------------------------------------------------------------------------
+/-
 // The MIT License (MIT)
-//
+/-
 // Copyright (c) 2021 Sergey Zawislak 
-//
+/-
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 // to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
 // and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-//
+/-
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-//
+/-
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  Этот файл - часть библиотеки OREGON_NR
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2021 Сергей Зависляк
-//
-// Данная лицензия разрешает лицам, получившим копию данного программного обеспечения и сопутствующей документации 
-// (в дальнейшем именуемыми «Программное Обеспечение»), безвозмездно использовать Программное Обеспечение без ограничений,
-// включая неограниченное право на использование, копирование, изменение, слияние, публикацию, распространение, сублицензирование
-// и/или продажу копий Программного Обеспечения, а также лицам, которым предоставляется данное Программное Обеспечение, при соблюдении следующих условий:
-//
-// Указанное выше уведомление об авторском праве и данные условия должны быть включены во все копии или значимые части данного Программного Обеспечения.
-//
-// ДАННОЕ ПРОГРАММНОЕ ОБЕСПЕЧЕНИЕ ПРЕДОСТАВЛЯЕТСЯ «КАК ЕСТЬ», БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ, ЯВНО ВЫРАЖЕННЫХ ИЛИ ПОДРАЗУМЕВАЕМЫХ, ВКЛЮЧАЯ ГАРАНТИИ ТОВАРНОЙ 
-// ПРИГОДНОСТИ, СООТВЕТСТВИЯ ПО ЕГО КОНКРЕТНОМУ НАЗНАЧЕНИЮ И ОТСУТСТВИЯ НАРУШЕНИЙ, НО НЕ ОГРАНИЧИВАЯСЬ ИМИ. НИ В КАКОМ СЛУЧАЕ АВТОРЫ ИЛИ ПРАВООБЛАДАТЕЛИ 
-// НЕ НЕСУТ ОТВЕТСТВЕННОСТИ ПО КАКИМ-ЛИБО ИСКАМ, ЗА УЩЕРБ ИЛИ ПО ИНЫМ ТРЕБОВАНИЯМ, В ТОМ ЧИСЛЕ, ПРИ ДЕЙСТВИИ КОНТРАКТА, ДЕЛИКТЕ ИЛИ ИНОЙ СИТУАЦИИ, 
-// ВОЗНИКШИМ ИЗ-ЗА ИСПОЛЬЗОВАНИЯ ПРОГРАММНОГО ОБЕСПЕЧЕНИЯ ИЛИ ИНЫХ ДЕЙСТВИЙ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ. 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------
+//This file is part of the OREGON_NR library
+-------------------------------------------------------------------------------------------------------------------------------------------------
+/-
+//Copyright (c) 2021 Sergey Zavislyak
+/-
+//This license permits individuals who have received a copy of this software and related documentation
+//(hereinafter referred to as the "Software"), use the Software free of charge without restrictions,
+//including unlimited right to use, copy, modify, merge, publish, distribute, sublicense
+//and / or sale of copies of the Software, as well as to persons to whom the Software is provided, subject to the following conditions:
+/-
+//The above copyright notice and these terms and conditions must be included in all copies or significant portions of this Software.
+/-
+//THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTY
+//FITNESS, FITNESS FOR ITS SPECIFIC PURPOSE AND NON-VIOLATION, BUT NOT LIMITED TO THEM. IN NO EVENT SHALL THE AUTHORS OR RIGHT HOLDERS
+//SHALL NOT BE LIABLE FOR ANY CLAIMS, DAMAGES OR OTHER REQUIREMENTS, INCLUDING, IN THE ACTION OF A CONTRACT, DELICATE OR OTHER SITUATION,
+//ARISED DUE TO THE USE OF THE SOFTWARE OR OTHER ACTION WITH THE SOFTWARE.
+-------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
 
-//Конструктор
+//Constructor
 
 Oregon_TM::Oregon_TM(byte tr_pin, int buf_size)
 {
@@ -70,9 +70,9 @@ Oregon_TM::Oregon_TM(void)
 }
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Функции передатчика////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
+//Transmitter functions ------------------------------------------------ ----------------------------
+---------------------------------------------------------------------------------------------------
 void Oregon_TM::sendZero(void)
 {
   if (protocol == 2){
@@ -124,7 +124,7 @@ void Oregon_TM::sendZero(void)
     }
   }
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::sendOne(void)
 {
@@ -177,7 +177,7 @@ void Oregon_TM::sendOne(void)
     
   }
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::sendMSB(byte data)
 {
@@ -185,12 +185,12 @@ void Oregon_TM::sendMSB(byte data)
   (bitRead(data, 5)) ? sendOne() : sendZero();
   (bitRead(data, 6)) ? sendOne() : sendZero();
   (bitRead(data, 7)) ? sendOne() : sendZero();
-  if (protocol == 2) time_marker += timing_corrector2;       //Поправка на разницу тактовых частот 1024.07Гц и 1024.60Гц
+  if (protocol == 2) time_marker += timing_corrector2;       //Correction for the difference in clock frequencies of 1024.07Hz and 1024.60Hz
   if (protocol == 3) time_marker += timing_corrector3;
                      
   
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
  
 void Oregon_TM::sendLSB(byte data)
 {
@@ -198,10 +198,10 @@ void Oregon_TM::sendLSB(byte data)
   (bitRead(data, 1)) ? sendOne() : sendZero();
   (bitRead(data, 2)) ? sendOne() : sendZero();
   (bitRead(data, 3)) ? sendOne() : sendZero();
-  if (protocol == 2) time_marker += timing_corrector2;       //Поправка на разницу тактовых частот 1024.07Гц и 1024.60Гц
+  if (protocol == 2) time_marker += timing_corrector2;       //Correction for the difference in clock frequencies of 1024.07Hz and 1024.60Hz
   if (protocol == 3) time_marker += timing_corrector3;
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::sendData()
 {
@@ -214,12 +214,12 @@ void Oregon_TM::sendData()
      sendLSB(SendBuffer[i]);
      q++;
      if (q >= buffer_size) break;
-     if (protocol == 2) time_marker += 4;       //Поправка на разницу тактовых частот 1024.07Гц и 1024.60Гц
+     if (protocol == 2) time_marker += 4;       //Correction for the difference in clock frequencies of 1024.07Hz and 1024.60Hz
    //if (protocol == 3) time_marker += 4;
-     //Поправка на разницу тактовых частот 1024.07Гц и 1024Гц
+     //Correction for the difference in clock frequencies of 1024.07Hz and 1024Hz
    }
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
  
 void Oregon_TM::sendOregon()
 {
@@ -229,7 +229,7 @@ void Oregon_TM::sendOregon()
     sendData();
     sendZero();
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::sendPreamble(void)
 {
@@ -252,7 +252,7 @@ void Oregon_TM::sendPreamble(void)
     time_marker += 3;
   }
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
  
 void Oregon_TM::calculateAndSetChecksum129(void)
 {
@@ -290,7 +290,7 @@ void Oregon_TM::calculateAndSetChecksum129(void)
   SendBuffer[11] += crc & 0xF0;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
  
 void Oregon_TM::calculateAndSetChecksum968(void)
 {
@@ -328,7 +328,7 @@ void Oregon_TM::calculateAndSetChecksum968(void)
   SendBuffer[11] += crc & 0xF0;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
  
 void Oregon_TM::calculateAndSetChecksum132(void)
 {
@@ -365,7 +365,7 @@ void Oregon_TM::calculateAndSetChecksum132(void)
   SendBuffer[8] += crc & 0x0F;
   SendBuffer[9] += crc & 0xF0;
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::calculateAndSetChecksum132S(void)
 {
@@ -404,7 +404,7 @@ void Oregon_TM::calculateAndSetChecksum132S(void)
  SendBuffer[7] += (crc & 0x0F) << 4;
  SendBuffer[7] += (crc & 0xF0) >> 4;
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::calculateAndSetChecksum318()
 {
@@ -441,7 +441,7 @@ void Oregon_TM::calculateAndSetChecksum318()
   SendBuffer[8] += crc & 0x0F;
   SendBuffer[9] += crc & 0xF0;
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::calculateAndSetChecksum810()
 {
@@ -476,7 +476,7 @@ void Oregon_TM::calculateAndSetChecksum810()
   SendBuffer[8] += crc & 0x0F;
   SendBuffer[9] += crc & 0xF0;
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::SendPacket()
 {
@@ -504,9 +504,9 @@ void Oregon_TM::SendPacket()
   }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Функции кодирования данных//////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
+//Data encoding functions ----------------------------------------------- --------------------- / -
+------------------------------------------------------------------------------------------------
 void Oregon_TM::setType(word type)
   {
     sens_type = type;
@@ -518,7 +518,7 @@ void Oregon_TM::setType(word type)
     SendBuffer[0] = (type & 0xFF00) >> 8;
     SendBuffer[1] = type & 0x00FF;
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::setChannel(byte channel)
   {
@@ -678,7 +678,7 @@ if (sens_type == THGR810)
       SendBuffer[2]&= 0x0F;
       SendBuffer[2] += channel_code & 0xF0;
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::setId(byte ID)
   {
@@ -687,14 +687,14 @@ void Oregon_TM::setId(byte ID)
     SendBuffer[3]&= 0x0F;
     SendBuffer[3] += (ID & 0x0F) << 4;
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::setBatteryFlag(bool level)
   {
     SendBuffer[3] &= 0xFB;
     if (level) SendBuffer[3] |= 0x04;
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::setStartCount(byte startcount)
   {
@@ -705,11 +705,11 @@ void Oregon_TM::setStartCount(byte startcount)
   }
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::setPressure(float mm_hg_pressure)
   {
-    //Ограничения датчика по даташиту
+    //Datasheet limitations of the sensor
     word pressure =  (word)(mm_hg_pressure / 0.75);
     if (mm_hg_pressure < 450) pressure = 600;
     if (mm_hg_pressure > 790) pressure = 1054;
@@ -720,7 +720,7 @@ void Oregon_TM::setPressure(float mm_hg_pressure)
       SendBuffer[7] &= 0xF0;
       SendBuffer[7] += pressure & 0x0F;
       SendBuffer[8] = (pressure & 0x0F0) + ((pressure & 0xF00) >> 8);
-      //прогноз - переменно
+      //forecast - variable
       SendBuffer[9] &= 0x0F;
       SendBuffer[9] += 0x60;
     }
@@ -736,7 +736,7 @@ void Oregon_TM::setPressure(float mm_hg_pressure)
     }
 
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////  
+---------------------------------------------------------------------------------------------------  
 void Oregon_TM::setTemperature(float temp)
   {
     if(temp < 0)
@@ -757,7 +757,7 @@ void Oregon_TM::setTemperature(float temp)
     SendBuffer[4] = tf;
     SendBuffer[4] |= (tempFloat << 4);
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::setHumidity(byte hum)
   {
@@ -767,7 +767,7 @@ void Oregon_TM::setHumidity(byte hum)
       SendBuffer[6] += (hum - (SendBuffer[6] * 10)) << 4;
 	}
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 void Oregon_TM::setComfort(float temp, byte hum)
   {
@@ -792,7 +792,7 @@ void Oregon_TM::setComfort(float temp, byte hum)
      return;
 	}
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 
 bool Oregon_TM::transmit()
 {
@@ -810,9 +810,9 @@ bool Oregon_TM::transmit()
 
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-//Поддержка датчика THP
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
+//THP sensor support
+---------------------------------------------------------------------------------------------------
 
 
 void Oregon_TM::setChannelTHP(byte channel)
@@ -820,7 +820,7 @@ void Oregon_TM::setChannelTHP(byte channel)
   SendBuffer[1] &= 0x0F;
   SendBuffer[1] += channel << 4;
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////  
+---------------------------------------------------------------------------------------------------  
 void Oregon_TM::setBatteryTHP( word bat_voltage)
   {
     SendBuffer[6] = (bat_voltage & 0x0FF0) >> 4;
@@ -828,7 +828,7 @@ void Oregon_TM::setBatteryTHP( word bat_voltage)
     SendBuffer[7] += (bat_voltage & 0x000F) << 4;
    
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////  
+---------------------------------------------------------------------------------------------------  
 void Oregon_TM::setTemperatureTHP(float bme_temperature)
   {
     word temp_code;
@@ -838,7 +838,7 @@ void Oregon_TM::setTemperatureTHP(float bme_temperature)
     SendBuffer[1] &= 0xF0;
     SendBuffer[1] += (temp_code & 0x0F00) >> 8;
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////  
+---------------------------------------------------------------------------------------------------  
 void Oregon_TM::setHumidityTHP(float bme_humidity)
   {
     word hum_code;
@@ -848,7 +848,7 @@ void Oregon_TM::setHumidityTHP(float bme_humidity)
     SendBuffer[4] &= 0x0F;
     SendBuffer[4] += (hum_code & 0x000F) << 4;
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 void Oregon_TM::setPressureTHP(float bme_pressure)
   {
     word pres_code;
@@ -858,7 +858,7 @@ void Oregon_TM::setPressureTHP(float bme_pressure)
     SendBuffer[4] &= 0xF0;
     SendBuffer[4] += (pres_code & 0x0F00) >> 8;
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 void Oregon_TM::setErrorTHP()
   {
     SendBuffer[1] |= 0x0F;
@@ -867,7 +867,7 @@ void Oregon_TM::setErrorTHP()
     SendBuffer[4] = 0xFF;
     SendBuffer[5] = 0xFF;
   }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+---------------------------------------------------------------------------------------------------
 void Oregon_TM::calculateAndSetChecksumTHP()
 {
   byte CCIT_POLY = 0x07;
