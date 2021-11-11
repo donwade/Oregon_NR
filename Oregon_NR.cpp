@@ -1,42 +1,42 @@
 #include "Oregon_NR.h"
 
--------------------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------------------
 // This file is part of the Arduino OREGON_NR library.
--------------------------------------------------------------------------------------------------------------------------------------------------
-/-
+//------------------------------------------------------------------------------------------------------------------------------------------------
+//
 // The MIT License (MIT)
-/-
+//
 // Copyright (c) 2021 Sergey Zawislak 
-/-
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 // to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
 // and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-/-
+//
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-/-
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
--------------------------------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------------------
 //This file is part of the OREGON_NR library
--------------------------------------------------------------------------------------------------------------------------------------------------
-/-
+//------------------------------------------------------------------------------------------------------------------------------------------------
+//
 //Copyright (c) 2021 Sergey Zavislyak
-/-
+//
 //This license permits individuals who have received a copy of this software and related documentation
 //(hereinafter referred to as the "Software"), use the Software free of charge without restrictions,
 //including unlimited right to use, copy, modify, merge, publish, distribute, sublicense
 //and / or sale of copies of the Software, as well as to persons to whom the Software is provided, subject to the following conditions:
-/-
+//
 //The above copyright notice and these terms and conditions must be included in all copies or significant portions of this Software.
-/-
+//
 //THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTY
 //FITNESS, FITNESS FOR ITS SPECIFIC PURPOSE AND NON-VIOLATION, BUT NOT LIMITED TO THEM. IN NO EVENT SHALL THE AUTHORS OR RIGHT HOLDERS
 //SHALL NOT BE LIABLE FOR ANY CLAIMS, DAMAGES OR OTHER REQUIREMENTS, INCLUDING, IN THE ACTION OF A CONTRACT, DELICATE OR OTHER SITUATION,
 //ARISED DUE TO THE USE OF THE SOFTWARE OR OTHER ACTION WITH THE SOFTWARE.
--------------------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 //Anything related to interruption -------------------------------------
@@ -68,7 +68,7 @@ void receiver_interruption(void) {
 }  
 #endif
 
---------------------------------------------------------------------/-
+//--------------------------------------------------------------------
 Oregon_NR::Oregon_NR(byte MHZ, byte MHZ_INT)
 {
   INT_NO = MHZ_INT;
@@ -120,7 +120,7 @@ Oregon_NR::Oregon_NR(byte MHZ, byte MHZ_INT, byte led, bool pull_up, int p_size,
 
 
 
---------------------------------------------------------------------/-
+//--------------------------------------------------------------------
 void Oregon_NR::start()
 {
   packet_number = 0;
@@ -130,18 +130,18 @@ void Oregon_NR::start()
   led_light(false);
   attachInterrupt(INT_NO, receiver_interruption, CHANGE);  
 }
---------------------------------------------------------------------/-
+//--------------------------------------------------------------------
 void Oregon_NR::stop()
 {
   detachInterrupt(INT_NO);  
 }
---------------------------------------------------------------------/-
+//--------------------------------------------------------------------
 //Capturing and analyzing a packet
 //DEBUG_INFO - Serial displays information about data capture
---------------------------------------------------------------------/-
+//--------------------------------------------------------------------
 void Oregon_NR::capture(bool DEBUG_INFO)
 {
-  --------------------------------------------------------
+//--------------------------------------------------------
   //Returning to the original state
   //maybe_packet = 0;
   packets_received = 0;
@@ -152,7 +152,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
   data_val2 = 0;
 
   
-  --------------------------------------------------------
+//--------------------------------------------------------
   //Reading data from the receiver
   noInterrupts();
   pulse_length = pl;
@@ -160,7 +160,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
   pulse_marker = pm;
   interrupts();
 
-  --------------------------------------------------------
+//--------------------------------------------------------
   //The impulse came
   if (pulse_length != 0 && receive_status == FIND_PACKET){  
   //If the impulse came too late for a specific version of the protocol, then this is the first impulse.
@@ -244,7 +244,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
 
 
   
-  --------------------------------------------------------------------/-
+//---------------------------------------------------------------------
   //If you find the right number of correct impulses in the right places, then it might be a packet. We start COLLECTING DATA
 
   if (start_pulse_cnt == CATCH_PULSES && receive_status == FIND_PACKET) {
@@ -269,7 +269,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
 
 
 //*************************************************************************************
-  ---------------------------------------------------------------------
+//---------------------------------------------------------------------
   //If the first packet is found and the second timed out
   //We do not wait for the second, but for the transition to the analysis mode
   //ALSO do not wait for the second packet if the packet splicing mode is disabled
@@ -277,12 +277,12 @@ void Oregon_NR::capture(bool DEBUG_INFO)
   if (packet_number == 1 && (!is_assemble || ver == 3 )) receive_status = ANALIZE_PACKETS;
 
 
-  --------------------------------------------------------------------/-
+//---------------------------------------------------------------------
   //Data analysis------------------------------------------------ --------
   if  (receive_status == ANALIZE_PACKETS) {     
   // Serial.print("ver an");
   // Serial.println(ver);
-    --------------------------------------------------------------------/-
+    //---------------------------------------------------------------------
     //If only a piece of the parcel arrived, then it is not worth processing
     if ((ver ==2 && read_tacts < 136 && read_tacts2 < 136) || (ver ==3 && read_tacts < 80)) 
     {
@@ -328,7 +328,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
         }
 
 
-    --------------------------------------------/-
+    //---------------------------------------------
     //Processing the first record
 
     get_tacts(collect_data, read_tacts);
@@ -342,10 +342,10 @@ void Oregon_NR::capture(bool DEBUG_INFO)
       data_val = get_data(1, ver, collect_data);
       halfshift = 1;
     }
-    --------------------------------------------/-
+    //---------------------------------------------
     //Looking for a synchronic position
     synchro_pos = get_synchro_pos(collect_data);
-    --------------------------------------------/-
+    //---------------------------------------------
     //We display the parcel
     if (DEBUG_INFO){
     if (packet_number == 2)   Serial.print("1)     ");
@@ -373,7 +373,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
         Serial.print(" TIME:");
         Serial.println (millis() / 1000);
     }
-    --------------------------------------------/-
+    //---------------------------------------------
     //We process the second record in the same way.
     if (packet_number == 2){
       get_tacts(collect_data2, read_tacts2);
@@ -419,7 +419,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
       
 
 
-      --------------------------------------------/-
+      //---------------------------------------------
       //COMPARISON OF PACKAGES
       //If there is only one package, then there is nothing to compare
        if (packet_number == 1)
@@ -427,7 +427,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
 	  result_size = read_tacts;
 	  result_data = collect_data;     
         }
-       --------------------------------------------/-
+       //---------------------------------------------
        //But if there are two, then you need a PACKAGE ASSEMBLY
        //calculate the optimal "offset" of packets relative to each other
        if (packet_number == 2) {
@@ -437,9 +437,9 @@ void Oregon_NR::capture(bool DEBUG_INFO)
           Serial.print(" COR: ");
           Serial.println(correlation);
         }
-        --------------------------------------------/-
+        //---------------------------------------------
         //We collect data in a package where the sync was found earlier
-        --------------------------------------------/-
+        //---------------------------------------------
 
         if (synchro_pos >= synchro_pos2)
         {
@@ -455,7 +455,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
           assemble_data(collect_data, collect_data2, correlation);
         }
       }
-    --------------------------------------------/-
+    //---------------------------------------------
     //Conclusion of the finished parcel
     if (DEBUG_INFO && packet_number == 2){
       Serial.print("RESULT ");
@@ -479,12 +479,12 @@ void Oregon_NR::capture(bool DEBUG_INFO)
 
 
      //We check if the splicing gave anything - turned it off. It only gives you a flag, but it takes a long time.
-    --------------------------------------------/-
+    //---------------------------------------------
 
    //if (get_data(halfshift, ver, result_data) > data_val && get_data(halfshift, ver, result_data) > data_val2 && ver == 2)
     if (packet_number == 2)
 
-    --------------------------------------------/-
+    //---------------------------------------------
     //Extracting bits from the clock sequence
     sens_type = 0;
      if (get_info_data(result_data, packet, valid_p))
@@ -527,9 +527,9 @@ void Oregon_NR::capture(bool DEBUG_INFO)
     sens_max_ws = 0;
     sens_wdir = 0;
 
-----------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------    
 //Decoding sensors Oregon
-----------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------    
       if ((sens_type == THGN132           ||
            sens_type == THN132            ||
            sens_type == THN800            ||
@@ -592,9 +592,9 @@ void Oregon_NR::capture(bool DEBUG_INFO)
 
 
 #if ADD_SENS_SUPPORT == 1
-------------------------------------------------------------------------------------------------//    
+//-----------------------------------------------------------------------------------------------//    
 //Decoding of complex gas sensors
-----------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------    
     if ((sens_type & 0xFF00) == GAS && crc_c){
       sens_id = 0;
       sens_battery = 0;
@@ -607,9 +607,9 @@ void Oregon_NR::capture(bool DEBUG_INFO)
       sens_CO = get_gas_CO(packet);
       sens_CH = get_gas_CH(packet);
     }
-------------------------------------------------------------------------------------------------//    
+//-----------------------------------------------------------------------------------------------//    
 //Decoding of fire alarm sensors
-----------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------    
     if ((sens_type & 0xFF00) == FIRE && crc_c){
       sens_id = 0;
       sens_battery = 0;
@@ -619,9 +619,9 @@ void Oregon_NR::capture(bool DEBUG_INFO)
       sens_ip72 = get_fire_ip72(packet);
       sens_lockalarm = get_fire_lockalarm(packet);
     }
-------------------------------------------------------------------------------------------------//    
+//-----------------------------------------------------------------------------------------------//    
 //Decoding of THP sensors
-----------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------    
     if ((sens_type & 0xFF00) == THP && crc_c){
       sens_chnl = get_gas_channel(packet);
       sens_voltage = get_thp_voltage(packet);
@@ -630,9 +630,9 @@ void Oregon_NR::capture(bool DEBUG_INFO)
       sens_pressure = get_thp_pressure(packet);
     }
 
-------------------------------------------------------------------------------------------------//    
+//-----------------------------------------------------------------------------------------------//    
 //Decoding of current and voltage sensors
-----------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------    
     if ((sens_type & 0xFF00) == CURRENT && crc_c){
       sens_id = 0;
       sens_battery = 0;
@@ -643,9 +643,9 @@ void Oregon_NR::capture(bool DEBUG_INFO)
       sens_pump_count = get_pump_count(packet);
     }
 
-------------------------------------------------------------------------------------------------//    
+//-----------------------------------------------------------------------------------------------//    
 //Decoding of capacitive precipitation sensors
-----------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------    
     if ((sens_type & 0xFF00) == CAPRAIN && crc_c){
       sens_id = 0;
       sens_battery = 0;
@@ -656,7 +656,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
     }
     
 #endif
---------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------
 //Other calculations
 //We return everything to its original state and turn on listening to the receiver
     work_time = millis() - work_time;
@@ -672,11 +672,11 @@ void Oregon_NR::capture(bool DEBUG_INFO)
     attachInterrupt(INT_NO, receiver_interruption, CHANGE);  
   }
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Retrieves a bar sequence from a recording
 //Parameters: cdptr - pointer to the recorded clock sequence
 //The result is written to the decode_tacts array
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 void Oregon_NR::get_tacts(byte* cdptr, int bitsize){
   
 //Dumping Arrays
@@ -892,13 +892,13 @@ void Oregon_NR::get_tacts(byte* cdptr, int bitsize){
 
   return;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Extracts a bit from a clock sequence.
 //Parameters: cdptr - pointer to the written data
 //btt - offset in ticks. An offset per cycle in parsing can help restore a packet that has a damaged beginning.
 //The function returns the quality or "suitability" of the decryption - the number of confidently recognized bars.
 //Comparing the suitability with btt u003d 0 and btt u003d 1, we choose the best
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per cycle during parsing can help restore a packet whose beginning is destroyed
   
   byte* cdp = cdptr;
@@ -1019,21 +1019,21 @@ int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per
   return 0;
 
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Listening to a channel with a sampling rate of 16384Hz
 //those. recording once every 61μs
 //Each clock has a corresponding byte. The measure is divided into two half measures. 8 measurements are taken in each half-cycle.
 //When a signal is present, the measurement adds 1 to the corresponding nibl. No signal - 0x00. The presence of a signal in the 0x88 clock cycle.
 //cdptr - pointer to the memory area where the signal is written
 //dtl - pointer to the number of clock cycles read
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 int Oregon_NR::collect(byte* cdptr){
   
   bool cdp_prev_null;
   byte* cdp = cdptr;
   byte nulls_found = 0;
   int bt2 = 0;
-  ----------------------------------------------------/-
+//-----------------------------------------------------
   //We start recording from this moment (end of the last impulse of the hook + 1/16 bar)
   if (ver == 2) 
   {
@@ -1050,7 +1050,7 @@ int Oregon_NR::collect(byte* cdptr){
     cdp += 2;
   }
 
-  ----------------------------------------------------/-
+//-----------------------------------------------------
   //We start reading data into memory
   //The maximum length of a link for v3 is 104BITs, THN132 is 76BITs + at least 3 bits 111, which we have already found
   int bt;
@@ -1078,7 +1078,7 @@ int Oregon_NR::collect(byte* cdptr){
     }
     //Do not give up the processor during data collection !!!
     //yield();
-    ---------------------------------------------
+    //---------------------------------------------
     //There is a time until the next half-beat arrives
     //You can check if the package is over
     //If the channel has recently been empty or weak interference, then this adds confidence that we are observing the end of the packet
@@ -1087,7 +1087,7 @@ int Oregon_NR::collect(byte* cdptr){
     else nulls_found = 0;
     cdp++;
 
-    ---------------------------------------------
+    //---------------------------------------------
     //If there are more than empty_space empty fields in the record, then
     //this is most likely the end of the parcel. There is no point in reading further
     //empty_space - empirical number, depends on the type of receiver and signal level
@@ -1104,7 +1104,7 @@ int Oregon_NR::collect(byte* cdptr){
 
 
 
-    ---------------------------------------------
+    //---------------------------------------------
     //We are waiting for the time of the next half-bar to arrive
 
     while (micros() < pre_marker);                    
@@ -1112,12 +1112,12 @@ int Oregon_NR::collect(byte* cdptr){
     yield();
   return bt;
 } 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Determining the offset of packets relative to each other
 //Pointers to data arrays are passed as parameters
 //Returning offset
 //> 0 - second batch started earlier, <0 - first batch started earlier
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 int Oregon_NR::correlate_data(byte* ser1, byte* ser2){
   
   byte best_correl = 0;
@@ -1178,12 +1178,12 @@ int Oregon_NR::correlate_data(byte* ser1, byte* ser2){
   if (best_correl_back > best_correl) return -best_shift_back;
   else return best_shift;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Build from two packages
 //Pointers to data arrays are passed as parameters
 //And the resulting packet should go first, i.e. the one that has a longer preamble.
 //shift - shift of the second packet relative to the first
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 void Oregon_NR::assemble_data(byte* m1, byte* m2, int shift){
 
   byte* s1 = m1;
@@ -1212,12 +1212,12 @@ void Oregon_NR::assemble_data(byte* m1, byte* m2, int shift){
     }
   }
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns the position of the sync in the parcel. 0xFF - no sync
 // 
 //code - a pointer to the decrypted bit sequence
 //result - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 int Oregon_NR::get_synchro_pos(byte* code){
   
   bool syn_found = false;
@@ -1247,12 +1247,12 @@ int Oregon_NR::get_synchro_pos(byte* code){
   }
   return (byte) i;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Creates a code package
 //code - a pointer to the decrypted bit sequence
 //result - a pointer to a code message
 //valid - pointer to the validity card of the code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 int Oregon_NR::get_info_data(byte* code, byte* result, byte* valid){
 
   byte* rd = result;
@@ -1313,14 +1313,14 @@ int Oregon_NR::get_info_data(byte* code, byte* result, byte* valid){
 
   return 1;
 }
-/-
-----------------------------------------------------------------------------------------------------
+//
+//---------------------------------------------------------------------------------------------------
 //Functions for decoding data from sensors
-----------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns the temperature value
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_temperature(byte* oregon_data){
 
   float tmprt = 0;
@@ -1345,18 +1345,18 @@ float Oregon_NR::get_temperature(byte* oregon_data){
   }
   return tmprt;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns the type of the sensor.
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 word Oregon_NR::get_sensor(byte* oregon_data){
 
     return (word)(*(oregon_data))*0x1000 + (*(oregon_data+1))*0x0100 + (*(oregon_data+2))*0x10 + *(oregon_data+3);
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns the value of the channel
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_channel(byte* oregon_data){
   if (crc_c)
   {
@@ -1390,8 +1390,8 @@ byte Oregon_NR::get_channel(byte* oregon_data){
   }
   else return 0;
 }
-----------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_battery(byte* oregon_data){
   if (((sens_type & 0x0FFF) == RTGN318 ||
        (sens_type & 0x0FFF) == RTHN318 ||
@@ -1409,10 +1409,10 @@ byte Oregon_NR::get_battery(byte* oregon_data){
   return (*(oregon_data+7) & 0x4) ? 0 : 1;  
   else  return 0;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns the moisture value
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_humidity(byte* oregon_data){
 
   if (((sens_type & 0x0FFF) == RTGN318 ||
@@ -1430,10 +1430,10 @@ float Oregon_NR::get_humidity(byte* oregon_data){
   }
   else return 0;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns the id of the sensor
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_id(byte* oregon_data){
   if (((sens_type & 0x0FFF) == RTGN318 ||
        (sens_type & 0x0FFF) == RTHN318 ||
@@ -1458,10 +1458,10 @@ byte Oregon_NR::get_id(byte* oregon_data){
   else return 0;
 }
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns the average wind value in m / s
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_avg_windspeed(byte* oregon_data)
 {
   if (sens_type == WGR800 && crc_c){
@@ -1473,10 +1473,10 @@ float Oregon_NR::get_avg_windspeed(byte* oregon_data)
   else return 0;
 }
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns the value of the maximum gust of wind in m / s
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_max_windspeed(byte* oregon_data)
 {
   if (sens_type == WGR800 && crc_c){
@@ -1488,10 +1488,10 @@ float Oregon_NR::get_max_windspeed(byte* oregon_data)
   else return 0;
 }
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns wind direction in quadrants
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_winddirection(byte* oregon_data)
 {
   if (sens_type == WGR800 && crc_c){
@@ -1502,10 +1502,10 @@ byte Oregon_NR::get_winddirection(byte* oregon_data)
   else return 0;
 }
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns the UV index
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_UV(byte* oregon_data)
 {
   if (sens_type == UVN800 && crc_c){
@@ -1517,10 +1517,10 @@ byte Oregon_NR::get_UV(byte* oregon_data)
   else return 0;
 }
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns the illumination in arbitrary units
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_light(byte* oregon_data)
 {
   if (sens_type == UVN800 && crc_c){
@@ -1533,10 +1533,10 @@ byte Oregon_NR::get_light(byte* oregon_data)
   else return 0;
 }
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns pressure
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_pressure()
 {
   if (sens_type == BTHGN129 && crc_c){
@@ -1547,10 +1547,10 @@ float Oregon_NR::get_pressure()
   }
   else return 0;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Returns data from a rain sensor
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_total_rain()
 {
   if (sens_type == PCR800 && crc_c){
@@ -1578,10 +1578,10 @@ float Oregon_NR::get_rain_rate()
   }
   else return 0;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //CRC check
 //oregon_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 bool Oregon_NR::check_CRC(byte* oregon_data, word sens_type){
 
   if (sens_type==THN132)
@@ -1661,14 +1661,14 @@ bool Oregon_NR::check_CRC(byte* oregon_data, word sens_type){
 
   return 0;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Procedure for calculating CRC8 and checksum for Oregon sensors
 //oregon_data - a pointer to a code message
 //CCIT_POLY - CRC generating polynomial
 //CCIT_START - initial CRC value
 //p_length - packet length
 //v3 - set to 1 if the third version of the protocol
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 bool Oregon_NR::check_oregon_crcsum(byte* oregon_data, byte CCIT_POLY, byte CCIT_START, byte p_length, bool v3)
 
 {
@@ -1696,13 +1696,13 @@ bool Oregon_NR::check_oregon_crcsum(byte* oregon_data, byte CCIT_POLY, byte CCIT
   yield();
   return (recived_crc == crc && recived_cksum == cksum)? 1 : 0;  
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Procedure for calculating CRC8 and checksum for Oregon sensors
 //oregon_data - a pointer to a code message
 //CCIT_POLY - CRC generating polynomial
 //CCIT_START - initial CRC value
 //p_length - packet length
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 bool Oregon_NR::check_own_crcsum(byte* oregon_data, byte p_length)
 
 {
@@ -1726,9 +1726,9 @@ bool Oregon_NR::check_own_crcsum(byte* oregon_data, byte p_length)
 }
 
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Data recovery by sensor type
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 void Oregon_NR::restore_data(byte* oregon_data, word sens_type){
   
   byte* pp=oregon_data;
@@ -1750,7 +1750,7 @@ void Oregon_NR::restore_data(byte* oregon_data, word sens_type){
 }
 
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 void Oregon_NR::led_light(bool led_on) {
   if (LED != 0xFF) { 
     if (PULL_UP && led_on) digitalWrite(LED, LOW);
@@ -1760,70 +1760,70 @@ void Oregon_NR::led_light(bool led_on) {
   }
 }
 
-----------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------
-/-
+//---------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
+//
 #if ADD_SENS_SUPPORT == 1
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 //Functions for decoding GAS sensor data
 //gas_data - a pointer to a code message
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_gas_channel(byte* gas_data){
 
   return gas_data[2];
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_gas_temperature_out(byte* gas_data){
 
   int temperat = gas_data[9] * 0x0100 + gas_data[8] * 0x0010 + gas_data[7];
   return ((float)(-1000 + temperat)) / 10;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_gas_temperature_in(byte* gas_data){
 
   int temperat = gas_data[12] * 0x0100 + gas_data[11] * 0x0010 + gas_data[10];
   return ((float)(-1000 + temperat)) / 10;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_gas_hmdty(byte* gas_data){
 
   return gas_data[14] * 0x10 + gas_data[13];
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_gas_CO(byte* gas_data){
 
   return gas_data[6] * 0x10 + gas_data[5];
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_gas_CH(byte* gas_data){
 
   return gas_data[4] * 0x10 + gas_data[3];
 }
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_fire_ip22(byte* fire_data){
 
   return fire_data[4] * 0x10 + fire_data[5];
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_fire_ip72(byte* fire_data){
 
   return fire_data[6] * 0x10 + fire_data[7];
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 byte Oregon_NR::get_fire_lockalarm(byte* fire_data){
 
   return fire_data[8] * 0x10 + fire_data[9];
 }
 
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_current(byte* current_data){
 
   return ((float)(current_data[4] * 0x1000 + current_data[5] * 0x0100  + current_data[6] * 0x0010  + current_data[7])) / 1000;
 }
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_voltage(byte* voltage_data){
 
   return ((float)(voltage_data[8] * 0x1000 + voltage_data[9] * 0x0100  + voltage_data[10] * 0x0010  + voltage_data[11])) / 10;
@@ -1838,28 +1838,28 @@ unsigned long Oregon_NR::get_dropcounter(byte* packetdata){
   return (packetdata[10] * 0x10000  + packetdata[11] * 0x1000  + packetdata[12] * 0x100 + packetdata[13] * 0x10 + packetdata[14]);
 }
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 int Oregon_NR::get_capacitance(byte* packetdata){
 
   return (packetdata[6] * 0x1000  + packetdata[7] * 0x100  + packetdata[8] * 0x10 + packetdata[9]);
 }
 
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_thp_temperature(byte* current_data){
 
   return (float)(current_data[3] * 0x0100 + current_data[4] * 0x0010  + current_data[5] * 0x0001) / 10 - 100;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_thp_pressure(byte* current_data){
 
   return (float)(current_data[9] * 0x0100 + current_data[10] * 0x0010  + current_data[11] * 0x0001) / 10 + 500;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_thp_voltage(byte* current_data){
 
   return (float)(current_data[12] * 0x0100 + current_data[13] * 0x0010  + current_data[14] * 0x0001) * 0.01;
 }
-----------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------
 float Oregon_NR::get_thp_humidity(byte* current_data){
 
   return (float)(current_data[6] * 0x0100 + current_data[7] * 0x0010  + current_data[8] * 0x0001) / 10;

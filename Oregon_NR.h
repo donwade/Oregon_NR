@@ -2,47 +2,47 @@
 #ifndef Oregon_NR_h
 #define Oregon_NR_h
 
--------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------
 // This file is part of the Arduino OREGON_NR library.
--------------------------------------------------------------------------------------------------------------------------------------------------
-/-
+//-------------------------------------------------------------------------------------------------------------------------------------------------
+//-
 // The MIT License (MIT)
-/-
+//-
 // Copyright (c) 2021 Sergey Zawislak 
-/-
+//-
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 // to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
 // and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-/-
+//-
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-/-
+//-
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
--------------------------------------------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------------------------------------------------------
 //This file is part of the OREGON_NR library
--------------------------------------------------------------------------------------------------------------------------------------------------
-/-
+//-------------------------------------------------------------------------------------------------------------------------------------------------
+//-
 //Copyright (c) 2021 Sergey Zavislyak
-/-
+//-
 //This license permits individuals who have received a copy of this software and related documentation
 //(hereinafter referred to as the "Software"), use the Software free of charge without restrictions,
 //including unlimited right to use, copy, modify, merge, publish, distribute, sublicense
 //and / or sale of copies of the Software, as well as to persons to whom the Software is provided, subject to the following conditions:
-/-
+//-
 //The above copyright notice and these terms and conditions must be included in all copies or significant portions of this Software.
-/-
+//-
 //THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING WARRANTY
 //FITNESS, FITNESS FOR ITS SPECIFIC PURPOSE AND NON-VIOLATION, BUT NOT LIMITED TO THEM. IN NO EVENT SHOULD THE AUTHORS OR RIGHT HOLDERS
 //SHALL NOT BE LIABLE FOR ANY CLAIMS, DAMAGES OR OTHER REQUIREMENTS, INCLUDING, IN THE ACTION OF A CONTRACT, DELICATE OR OTHER SITUATION,
 //ARISED DUE TO THE USE OF THE SOFTWARE OR OTHER ACTION WITH THE SOFTWARE.
--------------------------------------------------------------------------------------------------------------------------------------------------
-/-
+//-------------------------------------------------------------------------------------------------------------------------------------------------
+///-
 
 //Recognize packets from the following Oregon Scientific sensors:
-/-
+//-
 #define THGN132   0x1D20 //Temperature, humidity, 3 channels,
 #define THGN500   0x1D30 //Temperature, humidity,
 #define THN132    0xEC40 //Temperature, 3 channels,
@@ -57,18 +57,18 @@
 #define UVN800	  0xD874 //UV index, illuminance (thanks to XOR for the data provided).
 #define PCR800	  0x2914 //precipitation counter
 
-/-
+//-
 //Proprietary sensors:
 #define THP	  0x5500 //Temperature, humidity, atm pressure, 8 channels, operation from 3 AA batteries, (documentation is attached)
 #define GAS       0xAA00 //Temperature, humidity, concentration of CO and CH4, 8 channels,
 #define FIRE      0xBB00 //Control of signals of fire lines of sensors IP212-22 and IP212-72
 #define CURRENT   0xEE00 //Current, voltage, 8 channels,
 #define CAPRAIN   0x8800 //Capacitive all-weather precipitation sensor
-/-
+//-
 //These parameters can be played to save resources.
 #define ADD_SENS_SUPPORT 1      //Support for additional types of sensors of our own design - disabling slightly saves RAM
 
-/-
+//-
 //These parameters can be played to tune the best reception
 
 #define MAX_LENGTH2 976		 //The maximum pulse length of the preamble v2 is not less than the period so that the signal from different emulators is caught
@@ -83,7 +83,7 @@
 #define CATCH_PULSES 3		//How many to look for the correct impulses to start capturing. Recommended 2 - 4.
                                 //More - you may not catch a packet in a loud noise environment
                                 //Less - you can skip a packet, being heavily distracted by noise analysis
-------------------------------------------------------------------------------------------------------------------------------------------------/                           
+//------------------------------------------------------------------------------------------------------------------------------------------------/                           
 //Do not touch these parameters!
 
 #define IS_ASSEMBLE 1           //Whether to try to collect one whole from two damaged packages (for v2) - disabling greatly saves RAM!
