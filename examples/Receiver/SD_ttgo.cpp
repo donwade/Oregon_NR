@@ -3,20 +3,6 @@
 #include "SPI.h"
 //# from the ESP32 arduino library. Mod for ttgo board
 
-int log2SD ( const char * format, ... )
-{
-  int ret;
-  char buffer[300];
-  va_list args;
-  va_start (args, format);
-
-  ret = vsnprintf (buffer,sizeof(buffer),format, args);
-  Serial.println(buffer);
-  va_end (args);
-
-  return ret;
-}
-
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     Serial.printf("Listing directory: %s\n", dirname);
 
@@ -99,7 +85,7 @@ void writeFile(fs::FS &fs, const char * path, const char * message){
 }
 
 void appendFile(fs::FS &fs, const char * path, const char * message){
-    Serial.printf("Appending to file: %s\n", path);
+    //Serial.printf("Appending to file: %s\n", path);
 
     File file = fs.open(path, FILE_APPEND);
     if(!file){
@@ -107,7 +93,7 @@ void appendFile(fs::FS &fs, const char * path, const char * message){
         return;
     }
     if(file.print(message)){
-        Serial.println("Message appended");
+        //Serial.println("Message appended");
     } else {
         Serial.println("Append failed");
     }
@@ -230,3 +216,21 @@ void setupFS(){
     Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
     Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
 }
+
+int log2SD ( const char * format, ... )
+{
+  int ret;
+  char buffer[300];
+  va_list args;
+  va_start (args, format);
+
+  ret = vsnprintf (buffer,sizeof(buffer),format, args);
+  Serial.println(buffer);
+
+  appendFile(SD, "/Global.log", buffer);
+  va_end (args);
+
+  return ret;
+}
+
+
