@@ -103,6 +103,13 @@ float windchill (float speed, float temperature)
 #endif
 
 //---------------------------------------
+void die(char *msg)
+{
+    Serial.println(msg);
+    do yield();
+    while(true);
+}
+//---------------------------------------
 #define MAX_WIDTH 30
 
 void setup() {
@@ -110,9 +117,7 @@ void setup() {
    Serial.println();
    if (oregon.no_memory)
    {
-    Serial.println("NO MEMORY");   //Out of memory
-    do yield();
-    while(true);
+    die("NO MEMORY");   //Out of memory
    }
 
   delay(1000);
@@ -144,7 +149,7 @@ void loop() {
   if (oregon.captured && oregon.sens_type)  {
 
     if(!getLocalTime(&timeinfo)){
-      Serial.println("Failed to obtain time");
+      die("Failed to obtain time");
       return;
     }
 
@@ -199,21 +204,11 @@ void loop() {
     if (oregon.restore_sign & 0x08) strcat(cError,"r "); //built from two packages (for build mode in v.2)
     else  strcat(cError,".");
 
-
-    //Package processing time
-
-    //Serial.print(" ");
-    //Serial.print(oregon.work_time);
-    //Serial.print("ms ");
-
     char cDevName[15];
     char cChannel[10];
-    char cBatID[30];
     char cSenorType[8];
 
-    Serial.printf("Sensor = 0x%X\n", oregon.sens_type);
-
-    strcpy(cDevName, "UNKNOWN ");
+    strcpy(cDevName, "UNKNOWN");
     if ((oregon.sens_type == THGN132 ||
     (oregon.sens_type & 0x0FFF) == RTGN318 ||
     (oregon.sens_type & 0x0FFF) == RTHN318 ||
@@ -226,25 +221,23 @@ void loop() {
     oregon.sens_type == ST1005 ||
     oregon.sens_type == THGN500) && oregon.crc_c)
     {
-      if (oregon.sens_type == ST1004) strcpy(cDevName , "ST1004   ");
-      if (oregon.sens_type == ST1005) strcpy(cDevName,  "ST1005   ");
-      if (oregon.sens_type == THGN132) strcpy(cDevName, "THGN132N ");
-      if (oregon.sens_type == THGN500) strcpy(cDevName, "THGN500  ");
-      if (oregon.sens_type == THGR810) strcpy(cDevName, "THGR810  ");
-      if ((oregon.sens_type & 0x0FFF) == RTGN318) strcpy(cDevName, "RTGN318  ");
-      if ((oregon.sens_type & 0x0FFF) == RTHN318) strcpy(cDevName, "RTHN318  ");
-      if (oregon.sens_type == THN132 ) strcpy(cDevName,  "THN132N  ");
-      if (oregon.sens_type == THN800 ) strcpy(cDevName,  "THN800   ");
-      if (oregon.sens_type == BTHGN129 ) strcpy(cDevName,"BTHGN129 ");
-      if (oregon.sens_type == BTHR968 ) strcpy(cDevName, "BTHR968  ");
+      if (oregon.sens_type == ST1004) strcpy(cDevName , "ST1004");
+      if (oregon.sens_type == ST1005) strcpy(cDevName,  "ST1005");
+      if (oregon.sens_type == THGN132) strcpy(cDevName, "THGN132N");
+      if (oregon.sens_type == THGN500) strcpy(cDevName, "THGN500");
+      if (oregon.sens_type == THGR810) strcpy(cDevName, "THGR810");
+      if ((oregon.sens_type & 0x0FFF) == RTGN318) strcpy(cDevName, "RTGN318");
+      if ((oregon.sens_type & 0x0FFF) == RTHN318) strcpy(cDevName, "RTHN318");
+      if (oregon.sens_type == THN132 ) strcpy(cDevName,  "THN132N");
+      if (oregon.sens_type == THN800 ) strcpy(cDevName,  "THN800");
+      if (oregon.sens_type == BTHGN129 ) strcpy(cDevName,"BTHGN129");
+      if (oregon.sens_type == BTHR968 ) strcpy(cDevName, "BTHR968");
 
       if (oregon.sens_type != BTHR968 && oregon.sens_type != THGN500)
       {
         sprintf(cChannel,"C=%02d ", oregon.sens_chnl);
       }
-      else strcpy(cChannel,("    "));
-
-      sprintf(cBatID, "%s BAT: %s  ID: %x02", cError, (oregon.sens_battery) ? "F " : "e ", oregon.sens_id);
+      else strcpy(cChannel,(""));
 
       tempStat *who = locateStats(oregon.sens_id);
 
@@ -252,20 +245,20 @@ void loop() {
 
       time_t tick;
       time(&tick);
-     char record = ':';
+     char new_record = ':';
 
       if (who->outsideTempNow < who->outsideTempLo)
       {
           who->outsideTempLo = who->outsideTempNow;
           who->outsideTempLoTime = tick;
-          record = '*';
+          new_record = '*';
       }
 
       if (who->outsideTempNow > who->outsideTempHi)
       {
         who->outsideTempHi = who->outsideTempNow;
         who->outsideTempHiTime = tick;
-        record = '*';
+        new_record = '*';
       }
 
       struct tm  ts_hi;
@@ -273,21 +266,12 @@ void loop() {
       char  hibuf[80];
       char  lobuf[80];
 
-      // Format time, "ddd yyyy-mm-dd hh:mm:ss zzz"
       ts_lo = *localtime(&who->outsideTempLoTime);
       ts_hi = *localtime(&who->outsideTempHiTime);
 
       //strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
       strftime(lobuf, sizeof(lobuf), "%m-%d %H:%M", &ts_lo);
       strftime(hibuf, sizeof(hibuf), "%m-%d %H:%M", &ts_hi);
-
-#if 0
-      if (oregon.sens_tmp >= 0 && oregon.sens_tmp < 10) Serial.print(" TMP:  ");
-      if (oregon.sens_tmp < 0 && oregon.sens_tmp >-10)  Serial.print(" TMP: ");
-      if (oregon.sens_tmp <= -10)                       Serial.print(" TMP:");
-      if (oregon.sens_tmp >= 10)                        Serial.print(" TMP: ");
-      Serial.print(oregon.sens_tmp, 1);
-#endif
 
       char cHumidity[20] = {0};
       if (oregon.sens_type == THGN132 ||
@@ -304,25 +288,27 @@ void loop() {
           else strcpy(cHumidity,"      ");
 
       char cPressure[25] = {0};
+      float pressure = 0.0;
       if (oregon.sens_type == BTHGN129 ||  oregon.sens_type == BTHR968)
       {
-        sprintf(cPressure, " PRESS: %d Hgmm", oregon.get_pressure());
+        pressure = oregon.get_pressure();
       }
 
-      //Serial.printf("xxxxx %s yyyyy\n", lead);
-      log2SD("%s | %s %s %s %c TEMP : now %+05.1f C     [lo %s %+05.1f C]  [hi %s %+05.1f C ] %s %s %s\n",
-          lead,
+      log2SD("%s-%d %s  | %s BAT=%c ID=%02X TEMP %c now %+05.1f C     [lo %s %+05.1f C]  [hi %s %+05.1f C ] %.1f%% %.1f mmhg %s\n",
           cDevName,
-          cChannel,
-          cBatID,
-          record,
+          oregon.sens_chnl,
+          lead,
+          cError,
+          (oregon.sens_battery) ? 'F' : 'e',
+          oregon.sens_id,
+          new_record,
           who->outsideTempNow,
           lobuf,
           who->outsideTempLo,
           hibuf,
           who->outsideTempHi,
-          cHumidity,
-          cPressure,
+          oregon.sens_hmdty,
+          pressure,
           "ok" //cDump
           );
 
@@ -333,7 +319,7 @@ void loop() {
 
       tempStat *who =  locateStats(oregon.sens_id);
       who->outsideWindNow = oregon.sens_avg_ws * 3.6;
-     strcpy(cDevName, "WGR800   ");
+     strcpy(cDevName, "WGR800");
 
      char record = ':';
       if (who->outsideWindHi  <  oregon.sens_max_ws * 3.6)
@@ -376,18 +362,22 @@ void loop() {
      //strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
      strftime(cHiWind, sizeof(cHiWind), "%m-%d %H:%M", &ts_wind);
 
-     log2SD("%s | %s %s %s %c WIND : now %5.1f kph   [hi %s %5.1f kph] DIR=%s %s\n",
-         lead,
+
+     //Serial.printf("xxxxx %s yyyyy\n", lead);
+     log2SD("%s-%d  %s  | %s BAT=%c ID=%02X WIND : now %5.1f kph   [hi %s %5.1f kph] DIR=%s %s\n",
          cDevName,
-         cChannel,
-         cBatID,
+         oregon.sens_chnl,
+         lead,
+         cError,
+         (oregon.sens_battery) ? 'F' : 'e',
+         oregon.sens_id,
          record,
          who->outsideWindNow,
          cHiWind,
          who->outsideWindHi,
          windDir,
          "ok" //cDump
-         ); //kph
+         );
 
     }
 
