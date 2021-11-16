@@ -6,16 +6,12 @@ int log2SD ( const char * format, ... );
 
 void setupWiFi();
 void setupFS();
+bool setupFTP();
 
 #ifndef ST1005
 #define ST1005 0x12345
 #define ST1004 0x54321
 #endif
-
-// need to know which of N temperature sensors is outside (for windchill)
-#define OUTSIDE_TMPID 0xF5
-#define OUTSIDE_WGRID 0xF0  // I have 2. This is the one I want for wind speed
-
 
 //---------------------------------------
 typedef struct tempStat_s {
@@ -124,6 +120,8 @@ void setup() {
   Serial.println("OK");
 
   setupWiFi();  // setup the time first.
+  setupFTP();
+
   setupFS();
 
   //turn on listening to the radio channel
@@ -364,7 +362,7 @@ void loop() {
 
 
      //Serial.printf("xxxxx %s yyyyy\n", lead);
-     log2SD("%s-%d  %s  | %s BAT=%c ID=%02X WIND : now %5.1f kph   [hi %s %5.1f kph] DIR=%s %s\n",
+     log2SD("%s-%d  %s  | %s BAT=%c ID=%02X WIND : now %5.1f kph   [hi %s %5.1f kph] DIR= %.1f (%4s) %s\n",
          cDevName,
          oregon.sens_chnl,
          lead,
@@ -375,6 +373,7 @@ void loop() {
          who->outsideWindNow,
          cHiWind,
          who->outsideWindHi,
+         (float)oregon.sens_wdir * 22.5,
          windDir,
          "ok" //cDump
          );
@@ -468,4 +467,19 @@ void loop() {
   }
   yield();
 }
+//-----------------------------------------------------------
+#include "FTPServer.h"
+#include <stdio.h>
+
+bool setupFTP()
+{
+        printf("FTPServer starting!\n");
+        FTPServer *ftpServer = new FTPServer();
+        ftpServer->setCallbacks(new FTPFileCallbacks());
+        //ftpServer->setCredentials("user", "pass");
+        ftpServer->setPort(9876);
+        ftpServer->start();
+        delay(3000);
+}
+//-----------------------------------------------------------
 
