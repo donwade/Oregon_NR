@@ -6,7 +6,7 @@
 //
 // The MIT License (MIT)
 //
-// Copyright (c) 2021 Sergey Zawislak 
+// Copyright (c) 2021 Sergey Zawislak
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 // to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 //------------------------------------------------------------------------------------------------------------------------------------------------
@@ -38,34 +38,64 @@
 //ARISED DUE TO THE USE OF THE SOFTWARE OR OTHER ACTION WITH THE SOFTWARE.
 //------------------------------------------------------------------------------------------------------------------------------------------------
 
+#define HIST_SIZE (1 << 6)
+typedef struct { unsigned long pm; unsigned long pl; } HIST_S;
+
+unsigned short histIndex = 0;
+HIST_S HISTORY[HIST_SIZE];
+
+void histReport(void *notUsed)
+{
+	while(true)
+	{
+		Serial.println("---------");
+		for (int i = 0; i < HIST_SIZE; i++)
+		{
+			Serial.printf("pm = %lu pl= %lu\n", HISTORY[i].pm, HISTORY[i].pl);
+		}
+		Serial.println("");
+		delay(5000);
+	}
+}
 
 //Anything related to interruption -------------------------------------
 #ifndef Oregon_NR_int
 #define Oregon_NR_int
 static volatile unsigned long pm;
-static volatile unsigned long pl, timer_mark;  
+static volatile unsigned long pl, timer_mark;
 
 #if defined ( ESP8266 )
-void ICACHE_RAM_ATTR receiver_interruption(void) {  
+void ICACHE_RAM_ATTR receiver_interruption(void) {
 #elif defined ( ESP32 )
-void ICACHE_RAM_ATTR receiver_interruption(void) {  
+void ICACHE_RAM_ATTR receiver_interruption(void) {
 #else
-void receiver_interruption(void) {  
+void receiver_interruption(void) {
 #endif
+
+  AMessage RxMessage;
 
   if(digitalRead(RECEIVER_PIN)){
   //Impulse start
     pl = 0;
-    pm = micros();  
+    pm = micros();
   }
   else{
     //End of impulse
     //End time and length are calculated
-    pl = micros() - pm;  
+    pl = micros() - pm;
+
+    RxMessage.pl = pl;
+    RxMessage.pm = pm;
+
+	HISTORY[histIndex].pl = pl;
+	HISTORY[histIndex].pm = pm;
+	histIndex++; histIndex &= (HIST_SIZE-1);
+
+    if (DATA_DIO2queue) xQueueSendToBackFromISR(DATA_DIO2queue, &RxMessage, NULL);
     //pm += pl;
   }
   //yield();
-}  
+}
 #endif
 
 //--------------------------------------------------------------------
@@ -128,12 +158,12 @@ void Oregon_NR::start()
   start_pulse_cnt = 0;
   receive_status = FIND_PACKET;
   led_light(false);
-  attachInterrupt(INT_NO, receiver_interruption, CHANGE);  
+  attachInterrupt(INT_NO, receiver_interruption, CHANGE);
 }
 //--------------------------------------------------------------------
 void Oregon_NR::stop()
 {
-  detachInterrupt(INT_NO);  
+  detachInterrupt(INT_NO);
 }
 //--------------------------------------------------------------------
 //Capturing and analyzing a packet
@@ -150,19 +180,32 @@ void Oregon_NR::capture(bool DEBUG_INFO)
   captured = 0;
   data_val = 0;
   data_val2 = 0;
+  AMessage procMessage;
 
-  
+
 //--------------------------------------------------------
   //Reading data from the receiver
-  noInterrupts();
-  pulse_length = pl;
-  pl = 0;
-  pulse_marker = pm;
-  interrupts();
+  //noInterrupts();
+
+  static bool xxx;
+  digitalWrite(25, xxx); xxx = !xxx;
+
+  if (xQueueReceive( DATA_DIO2queue, &( procMessage ),  2000 * portTICK_PERIOD_MS ))
+  {
+  	pulse_length = procMessage.pl;
+  	//pl = 0;
+  	pulse_marker = procMessage.pm;
+  	//interrupts();
+  }
+  else
+  {
+	  return;
+  }
+
 
 //--------------------------------------------------------
   //The impulse came
-  if (pulse_length != 0 && receive_status == FIND_PACKET){  
+  if (pulse_length != 0 && receive_status == FIND_PACKET){
   //If the impulse came too late for a specific version of the protocol, then this is the first impulse.
     if ((pulse_marker - pre_marker) > (PER_LENGTH2 * 2 + LENGTH_TOLERANCE) && ver == 2) start_pulse_cnt = 0;
     if ((pulse_marker - pre_marker) > (PER_LENGTH3 * 2 + LENGTH_TOLERANCE) && ver == 3) start_pulse_cnt = 0;
@@ -174,14 +217,14 @@ void Oregon_NR::capture(bool DEBUG_INFO)
       if (pulse_length < (MAX_LENGTH2 + LENGTH_TOLERANCE) && pulse_length > (MIN_LENGTH2 -  LENGTH_TOLERANCE) && catch2 ) {
         start_pulse_cnt = 1;
         pre_marker = pulse_marker;
-	ver = 2;
+		ver = 2;
         pulse1 = pulse_length;
       }
 
       if (pulse_length < (MAX_LENGTH3 + LENGTH_TOLERANCE) && pulse_length > (MIN_LENGTH3 -  LENGTH_TOLERANCE) && catch3 && packet_number == 0) {
         start_pulse_cnt = 1;
         pre_marker = pulse_marker;
-	ver = 3;
+		ver = 3;
         pulse1 = pulse_length;
       }
       return;
@@ -189,7 +232,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
 
     //Found the next "correct" impulse
     else {
-      
+
       //version 2
       if (pulse_length < (MAX_LENGTH2 + LENGTH_TOLERANCE) && pulse_length > (MIN_LENGTH2 -  LENGTH_TOLERANCE) && catch2 ) {
 
@@ -226,7 +269,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
           pulse2 = pulse_length;
 	  if (start_pulse_cnt != CATCH_PULSES) return;
           pulse_length = 0;
-	  
+
         }
         //The next impulse is in the wrong place
         //We assign it first
@@ -243,7 +286,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
   }
 
 
-  
+
 //---------------------------------------------------------------------
   //If you find the right number of correct impulses in the right places, then it might be a packet. We start COLLECTING DATA
 
@@ -279,20 +322,20 @@ void Oregon_NR::capture(bool DEBUG_INFO)
 
 //---------------------------------------------------------------------
   //Data analysis------------------------------------------------ --------
-  if  (receive_status == ANALIZE_PACKETS) {     
+  if  (receive_status == ANALIZE_PACKETS) {
   // Serial.print("ver an");
   // Serial.println(ver);
     //---------------------------------------------------------------------
     //If only a piece of the parcel arrived, then it is not worth processing
-    if ((ver ==2 && read_tacts < 136 && read_tacts2 < 136) || (ver ==3 && read_tacts < 80)) 
+    if ((ver ==2 && read_tacts < 136 && read_tacts2 < 136) || (ver ==3 && read_tacts < 80))
     {
       receive_status = FIND_PACKET;
-      start_pulse_cnt = 0;  
+      start_pulse_cnt = 0;
       packet_number = 0;
        return;
     }
     //Disable interrupt to reduce processing time
-    detachInterrupt(INT_NO);
+    //detachInterrupt(INT_NO);
 
     led_light(true);
     restore_sign = 0;
@@ -416,7 +459,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
       }
       byte* result_data, result_data_start, aux_data;
       int correlation;
-      
+
 
 
       //---------------------------------------------
@@ -425,7 +468,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
        if (packet_number == 1)
 	{
 	  result_size = read_tacts;
-	  result_data = collect_data;     
+	  result_data = collect_data;
         }
        //---------------------------------------------
        //But if there are two, then you need a PACKAGE ASSEMBLY
@@ -527,9 +570,9 @@ void Oregon_NR::capture(bool DEBUG_INFO)
     sens_max_ws = 0;
     sens_wdir = 0;
 
-//---------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------
 //Decoding sensors Oregon
-//---------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------
       if ((sens_type == THGN132           ||
            sens_type == THN132            ||
            sens_type == THN800            ||
@@ -551,7 +594,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
           sens_type == THGR810           ||
           sens_type == BTHGN129          ||
           sens_type == BTHR968           ||
-          sens_type == THGN500) 
+          sens_type == THGN500)
         sens_hmdty = get_humidity(packet);
       else sens_hmdty = 0;
     }
@@ -573,7 +616,7 @@ void Oregon_NR::capture(bool DEBUG_INFO)
       sens_avg_ws = get_avg_windspeed(packet);
       sens_max_ws = get_max_windspeed(packet);
       sens_wdir = get_winddirection(packet);
-    }   
+    }
 
     if (sens_type == UVN800 && crc_c){
       sens_id = get_id(packet);
@@ -581,20 +624,20 @@ void Oregon_NR::capture(bool DEBUG_INFO)
       UV_index = get_UV(packet);
       lightness = get_light(packet);
     }
-    
+
     if (sens_type == PCR800 && crc_c){
       sens_id = get_id(packet);
       sens_battery = get_battery(packet);
       //The rest of the parameters are extracted directly from the package
-    }   
+    }
 
 
 
 
 #if ADD_SENS_SUPPORT == 1
-//-----------------------------------------------------------------------------------------------//    
+//-----------------------------------------------------------------------------------------------//
 //Decoding of complex gas sensors
-//---------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------
     if ((sens_type & 0xFF00) == GAS && crc_c){
       sens_id = 0;
       sens_battery = 0;
@@ -607,21 +650,21 @@ void Oregon_NR::capture(bool DEBUG_INFO)
       sens_CO = get_gas_CO(packet);
       sens_CH = get_gas_CH(packet);
     }
-//-----------------------------------------------------------------------------------------------//    
+//-----------------------------------------------------------------------------------------------//
 //Decoding of fire alarm sensors
-//---------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------
     if ((sens_type & 0xFF00) == FIRE && crc_c){
       sens_id = 0;
       sens_battery = 0;
-           
+
       sens_chnl = get_gas_channel(packet);
       sens_ip22 = get_fire_ip22(packet);
       sens_ip72 = get_fire_ip72(packet);
       sens_lockalarm = get_fire_lockalarm(packet);
     }
-//-----------------------------------------------------------------------------------------------//    
+//-----------------------------------------------------------------------------------------------//
 //Decoding of THP sensors
-//---------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------
     if ((sens_type & 0xFF00) == THP && crc_c){
       sens_chnl = get_gas_channel(packet);
       sens_voltage = get_thp_voltage(packet);
@@ -630,31 +673,31 @@ void Oregon_NR::capture(bool DEBUG_INFO)
       sens_pressure = get_thp_pressure(packet);
     }
 
-//-----------------------------------------------------------------------------------------------//    
+//-----------------------------------------------------------------------------------------------//
 //Decoding of current and voltage sensors
-//---------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------
     if ((sens_type & 0xFF00) == CURRENT && crc_c){
       sens_id = 0;
       sens_battery = 0;
-           
+
       sens_chnl = get_gas_channel(packet);
       sens_current = get_current(packet);
       sens_voltage = get_voltage(packet);
       sens_pump_count = get_pump_count(packet);
     }
 
-//-----------------------------------------------------------------------------------------------//    
+//-----------------------------------------------------------------------------------------------//
 //Decoding of capacitive precipitation sensors
-//---------------------------------------------------------------------------------------------------    
+//---------------------------------------------------------------------------------------------------
     if ((sens_type & 0xFF00) == CAPRAIN && crc_c){
       sens_id = 0;
       sens_battery = 0;
-           
-      //sens_heater = 
+
+      //sens_heater =
       sens_drop_counter = get_dropcounter(packet);
       sens_capacitance = get_capacitance(packet);
     }
-    
+
 #endif
 //-------------------------------------------------------------------------------
 //Other calculations
@@ -664,12 +707,12 @@ void Oregon_NR::capture(bool DEBUG_INFO)
     if (data_val >= 64 && synchro_pos != 255) packets_received++;
     if (data_val2 >= 64 && synchro_pos2 != 255) packets_received++;
     receive_status = FIND_PACKET;
-    start_pulse_cnt = 0;  
+    start_pulse_cnt = 0;
     packet_number = 0;
     led_light(false);
     //Serial.print("LED = ");
     //Serial.println(LED);
-    attachInterrupt(INT_NO, receiver_interruption, CHANGE);  
+    attachInterrupt(INT_NO, receiver_interruption, CHANGE);
   }
 }
 //---------------------------------------------------------------------------------------------------
@@ -678,51 +721,51 @@ void Oregon_NR::capture(bool DEBUG_INFO)
 //The result is written to the decode_tacts array
 //---------------------------------------------------------------------------------------------------
 void Oregon_NR::get_tacts(byte* cdptr, int bitsize){
-  
+
 //Dumping Arrays
   for(int bt = 0 ; bt < bitsize; bt++) decode_tacts[bt] = 2;      //Initially, the beat is unknown
 
 //Decoding measures
-  byte* cdp = cdptr;        
+  byte* cdp = cdptr;
   for(int bt = 0 ; bt < bitsize; bt++)
   {
-      if (ver == 2 && decode_method == 1)  
+      if (ver == 2 && decode_method == 1)
     {
       if ((*cdp & 0xf0) > 0x20 && (*cdp & 0x0f) > 0x03) decode_tacts[bt] = 1;
       if ((*cdp & 0xf0) < 0x30 && (*cdp & 0x0f) < 0x05) decode_tacts[bt] = 0;
       if ((*cdp & 0xf0) < 0x20 && (*cdp & 0x0f) > 0x04) decode_tacts[bt] = 4;
       if ((*cdp & 0xf0) > 0x40 && (*cdp & 0x0f) < 0x02) decode_tacts[bt] = 3;
     }
-      if (ver == 2 && decode_method == 2)  
+      if (ver == 2 && decode_method == 2)
     {
       if (*cdp == 0x88 || *cdp == 0x87  || *cdp == 0x86 || *cdp == 0x85 || *cdp == 0x84 || *cdp == 0x83 || *cdp == 0x78 ||  *cdp == 0x77 || *cdp == 0x68 || *cdp == 0x58 ) decode_tacts[bt] = 1;              //Step 11 (IDEALLY 87, BUT DUE TO A SHIFT OF 3 STACKS MAY BE FROM 58 A 84)
       if (*cdp == 0x00 || *cdp == 0x01  || *cdp == 0x02 || *cdp == 0x03 || *cdp == 0x10 || *cdp == 0x20 || *cdp == 0x30) decode_tacts[bt] = 0;                                                         //Clock 00 (IDEALLY 00, BUT DUE TO A SHIFT OF 3 STACKS MAY BE FROM 30 YES 03)
       if (*cdp == 0x05 || *cdp == 0x06  || *cdp == 0x07 || *cdp == 0x08 || *cdp == 0x15 || *cdp == 0x16 || *cdp == 0x17 || *cdp == 0x24 || *cdp == 0x25 || *cdp == 0x34 || *cdp == 0x35) decode_tacts[bt] = 4; //Clock 01 (IDEALLY 07, BUT DUE TO A SHIFT OF 3 TIMES, IT CAN BE UP TO 34)
       if (*cdp == 0x50 || *cdp == 0x60  || *cdp == 0x70 || *cdp == 0x80 || *cdp == 0x51 || *cdp == 0x61 || *cdp == 0x71 || *cdp == 0x42 || *cdp == 0x52 || *cdp == 0x43 || *cdp == 0x53) decode_tacts[bt] = 3; //Measure 10 (IDEALLY 70, BUT because of a shift of 3 bars, it can be up to 43)
     }
-    if (ver == 3 && decode_method == 1)  
+    if (ver == 3 && decode_method == 1)
     {
       if ((*cdp & 0xf0) > 0x20 && (*cdp & 0x0f) > 0x04) decode_tacts[bt] = 1;
       if ((*cdp & 0xf0) < 0x30 && (*cdp & 0x0f) < 0x05) decode_tacts[bt] = 0;
       if ((*cdp & 0xf0) < 0x20 && (*cdp & 0x0f) > 0x02) decode_tacts[bt] = 4;
       if ((*cdp & 0xf0) > 0x20 && (*cdp & 0x0f) < 0x02) decode_tacts[bt] = 3;
     }
-    if (ver == 3 && decode_method == 2)  
+    if (ver == 3 && decode_method == 2)
     {
       if (*cdp == 0x87 || *cdp == 0x86  || *cdp == 0x85 || *cdp == 0x84 || *cdp == 0x83 || *cdp == 0x82 || *cdp == 0x78 ||  *cdp == 0x77 || *cdp == 0x76 || *cdp == 0x68 || *cdp == 0x67 ) decode_tacts[bt] = 1;              //Step 11 (IDEALLY 87, BUT DUE TO A SHIFT OF 3 STACKS MAY BE FROM 58 A 84)
       if (*cdp == 0x00 || *cdp == 0x01  || *cdp == 0x02 || *cdp == 0x03 || *cdp == 0x10 || *cdp == 0x20 || *cdp == 0x30) decode_tacts[bt] = 0;                                                         //Clock 00 (IDEALLY 00, BUT DUE TO A SHIFT OF 3 STACKS MAY BE FROM 30 YES 03)
       if (*cdp == 0x05 || *cdp == 0x06  || *cdp == 0x07 || *cdp == 0x08 || *cdp == 0x15 || *cdp == 0x16 || *cdp == 0x17 || *cdp == 0x24 || *cdp == 0x25 || *cdp == 0x34 || *cdp == 0x35) decode_tacts[bt] = 4; //Clock 01 (IDEALLY 07, BUT DUE TO A SHIFT OF 3 TIMES, IT CAN BE UP TO 34)
       if (*cdp == 0x50 || *cdp == 0x60  || *cdp == 0x70 || *cdp == 0x80 || *cdp == 0x51 || *cdp == 0x61 || *cdp == 0x71 || *cdp == 0x42 || *cdp == 0x52 || *cdp == 0x43 || *cdp == 0x53) decode_tacts[bt] = 3; //Measure 10 (IDEALLY 70, BUT because of a shift of 3 bars, it can be up to 43)
     }
-      if (decode_method == 3)  
+      if (decode_method == 3)
     {
       if ((((*cdp) >> 4) + (*cdp & 0x0F)) < 5)  decode_tacts[bt] = 0;
       if (((((*cdp) >> 4) + (*cdp & 0x0F)) > 4) && ((((*cdp) >> 4) + (*cdp & 0x0F)) < 10))
 	{
-          if (((*cdp) >> 4) > (*cdp & 0x0f))  decode_tacts[bt] = 3;    
-          if (((*cdp) >> 4) < (*cdp & 0x0f))  decode_tacts[bt] = 4;  
-          if (((*cdp) >> 4) == (*cdp & 0x0f) && (*(cdp - 1) & 0x0F) < 4 )  decode_tacts[bt] = 4;  
-          if (((*cdp) >> 4) == (*cdp & 0x0f) && (*(cdp - 1) & 0x0F) > 4 )  decode_tacts[bt] = 3;  
+          if (((*cdp) >> 4) > (*cdp & 0x0f))  decode_tacts[bt] = 3;
+          if (((*cdp) >> 4) < (*cdp & 0x0f))  decode_tacts[bt] = 4;
+          if (((*cdp) >> 4) == (*cdp & 0x0f) && (*(cdp - 1) & 0x0F) < 4 )  decode_tacts[bt] = 4;
+          if (((*cdp) >> 4) == (*cdp & 0x0f) && (*(cdp - 1) & 0x0F) > 4 )  decode_tacts[bt] = 3;
 	}
       if ((((*cdp) >> 4) + (*cdp & 0x0F)) > 10) decode_tacts[bt] = 1;
 
@@ -733,7 +776,7 @@ void Oregon_NR::get_tacts(byte* cdptr, int bitsize){
 //Expansion printing
  if (receiver_dump)
  {
-   byte* cdp = cdptr;        
+   byte* cdp = cdptr;
    Serial.print("BEFORE ");
 
 
@@ -741,12 +784,12 @@ void Oregon_NR::get_tacts(byte* cdptr, int bitsize){
 
    {
 
-     if (decode_tacts[bt] == 1) Serial.print("II"); 
-     if (decode_tacts[bt] == 0) Serial.print("OO"); 
-     if (decode_tacts[bt] == 2) Serial.print("__"); 
-     if (decode_tacts[bt] == 3) Serial.print("IO"); 
-     if (decode_tacts[bt] == 4) Serial.print("OI"); 
-     Serial.print(" "); 
+     if (decode_tacts[bt] == 1) Serial.print("II");
+     if (decode_tacts[bt] == 0) Serial.print("OO");
+     if (decode_tacts[bt] == 2) Serial.print("__");
+     if (decode_tacts[bt] == 3) Serial.print("IO");
+     if (decode_tacts[bt] == 4) Serial.print("OI");
+     Serial.print(" ");
      *cdp++;
   }
    Serial.println();
@@ -800,7 +843,7 @@ void Oregon_NR::get_tacts(byte* cdptr, int bitsize){
   }
 
   //recovery of lost half-measures
-   cdp = cdptr;        
+   cdp = cdptr;
    for(int bt = 1 ; bt < (bitsize - 1); bt++)
    {
      if (decode_tacts[bt] == 2)
@@ -808,25 +851,25 @@ void Oregon_NR::get_tacts(byte* cdptr, int bitsize){
      //X0 _0
      //X0 10
      if ((*cdp & 0x0f) < 0x05 && (decode_tacts[bt - 1] == 0 || decode_tacts[bt - 1] == 3)){
-        decode_tacts[bt] = 3; 
+        decode_tacts[bt] = 3;
         restore_sign ^= 1;
      }
      //X1 _1
      //X1 01
      if ((*cdp & 0x0f) > 0x04 && (decode_tacts[bt - 1] == 1 || decode_tacts[bt - 1] == 4)){
-        decode_tacts[bt] = 4; 
+        decode_tacts[bt] = 4;
         restore_sign ^= 1;
      }
       //0_ 0X
       //01 0X
      if ((*cdp & 0xF0) < 0x50 && (decode_tacts[bt + 1] == 0 || decode_tacts[bt + 1] == 4)){
-        decode_tacts[bt] = 4; 
+        decode_tacts[bt] = 4;
         restore_sign ^= 1;
      }
        //1_ 1X
       //10 1X
      if ((*cdp & 0xF0) > 0x40 && (decode_tacts[bt + 1] == 1 || decode_tacts[bt + 1] == 3)){
-        decode_tacts[bt] = 3; 
+        decode_tacts[bt] = 3;
         restore_sign ^= 1;
      }
     }
@@ -845,7 +888,7 @@ void Oregon_NR::get_tacts(byte* cdptr, int bitsize){
     }
    *cdp++;
   }
- 
+
 
 //Determining the package version from the preamble
 //If the preamble is confidently recognized for several bars, then you can judge the version of the package
@@ -874,16 +917,16 @@ void Oregon_NR::get_tacts(byte* cdptr, int bitsize){
 //Expansion printing
  if (receiver_dump)
  {
-   byte* cdp = cdptr;        
+   byte* cdp = cdptr;
    Serial.print("AFTER  ");
    for(int bt = 0 ; bt < bitsize; bt++)
    {
-     if (decode_tacts[bt] == 1) Serial.print("II"); 
-     if (decode_tacts[bt] == 0) Serial.print("OO"); 
-     if (decode_tacts[bt] == 2) Serial.print("__"); 
-     if (decode_tacts[bt] == 3) Serial.print("IO"); 
-     if (decode_tacts[bt] == 4) Serial.print("OI"); 
-     Serial.print(" "); 
+     if (decode_tacts[bt] == 1) Serial.print("II");
+     if (decode_tacts[bt] == 0) Serial.print("OO");
+     if (decode_tacts[bt] == 2) Serial.print("__");
+     if (decode_tacts[bt] == 3) Serial.print("IO");
+     if (decode_tacts[bt] == 4) Serial.print("OI");
+     Serial.print(" ");
      *cdp++;
   }
    Serial.println();
@@ -900,11 +943,11 @@ void Oregon_NR::get_tacts(byte* cdptr, int bitsize){
 //Comparing the suitability with btt u003d 0 and btt u003d 1, we choose the best
 //---------------------------------------------------------------------------------------------------
 int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per cycle during parsing can help restore a packet whose beginning is destroyed
-  
+
   byte* cdp = cdptr;
 //We clean the array
   for(int bt=0 ; bt<no_read_bits; bt++){
-    
+
     *cdp = 128;
     cdp++;
   }
@@ -916,7 +959,7 @@ int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per
 
   if (p_ver == 2){
     for(int bt=1 ; bt < no_read_bits; bt++){
-    
+
       if(decode_tacts[bt*2-btt]==0) *cdp-=1; //If 00 - then it is possible here 0
       //if(decode_tacts[bt*2-btt]==0) *cdp-=1; // начальный вес 1 отбрасывает датчики со сбитой синхронизацией. 2 - ловит с ними
       if(decode_tacts[bt*2-btt]==1) *cdp+=1; //If 11 - then presumably here 1
@@ -924,12 +967,12 @@ int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per
       if(decode_tacts[bt*2-2-btt]==0 && decode_tacts[bt*2-1-btt]==3) *cdp+=1;
       if(decode_tacts[bt*2-2-btt]==0 && decode_tacts[bt*2-1-btt]==1) *cdp-=1;
       if(decode_tacts[bt*2-2-btt]==1 && decode_tacts[bt*2-1-btt]==0) *cdp+=1;
-    
+
       if(decode_tacts[bt*2+2-btt]==1 && decode_tacts[bt*2+1-btt]==3) *cdp-=1; //If after that comes 1011 - then this adds confidence that here 0
       if(decode_tacts[bt*2+2-btt]==0 && decode_tacts[bt*2+1-btt]==4) *cdp+=1;
       if(decode_tacts[bt*2+2-btt]==0 && decode_tacts[bt*2+1-btt]==1) *cdp-=1;
       if(decode_tacts[bt*2+2-btt]==1 && decode_tacts[bt*2+1-btt]==0) *cdp+=1;
-    
+
         //We count the number of valid bits in the packet
       if (*cdp>(129))  packet_validity += *cdp - 128;
       if (*cdp<(127)) packet_validity += 128 - *cdp;
@@ -941,7 +984,7 @@ int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per
 
   if (p_ver == 3){
     for(int bt = 1 ; bt < no_read_bits; bt++){
-    
+
       if (*(cdp - 1) > 128) //if there was 1 before
       {
         if (decode_tacts[bt - btt] == 0 || decode_tacts[bt - btt] == 1) *cdp -= 2; //If 00 or 11 - then here 0
@@ -956,7 +999,7 @@ int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per
      //if it is not clear before that, then most likely it was not possible to restore two whole bars. look a few bits back
 
      //Re-ordering when skipping the spirit of beats to a row
-      if (*(cdp - 1) == 128 && *(cdp - 2) == 128) 
+      if (*(cdp - 1) == 128 && *(cdp - 2) == 128)
       {
         //0 __ __ 0 - does not change
         if ((decode_tacts[bt - btt] == 0 || decode_tacts[bt - btt] == 3) && (decode_tacts[bt - btt - 2] == 0 || decode_tacts[bt - btt - 2] == 4))
@@ -964,7 +1007,7 @@ int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per
 	 if (*(cdp - 2) > 128) *cdp += 1;
 	 if (*(cdp - 2) < 128) *cdp -= 1;
 	}
-	else 
+	else
 	{
         //1 __ __ 0 or 0 __ __ 1- changes
 	 if (*(cdp - 2) > 128) *cdp -= 1;
@@ -973,7 +1016,7 @@ int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per
       }
 
      //Re-ordering when skipping three bits in a row
-      if (*(cdp - 1) == 128 && *(cdp - 2) == 128  && *(cdp - 3) == 128) 
+      if (*(cdp - 1) == 128 && *(cdp - 2) == 128  && *(cdp - 3) == 128)
       {
         //0 __ __ 0 - does not change
         if ((decode_tacts[bt - btt] == 0 || decode_tacts[bt - btt] == 3) && (decode_tacts[bt - btt - 3] == 0 || decode_tacts[bt - btt - 3] == 4))
@@ -981,7 +1024,7 @@ int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per
 	 if (*(cdp - 2) > 128) *cdp += 1;
 	 if (*(cdp - 2) < 128) *cdp -= 1;
 	}
-	else 
+	else
 	{
         //1 __ __ 0 or 0 __ __ 1- changes
 	 if (*(cdp - 2) > 128) *cdp -= 1;
@@ -990,7 +1033,7 @@ int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per
       }
 
      //Re-ordering when skipping four bits to a row
-      if (*(cdp - 1) == 128 && *(cdp - 2) == 128  && *(cdp - 3) == 128  && *(cdp - 4) == 128) 
+      if (*(cdp - 1) == 128 && *(cdp - 2) == 128  && *(cdp - 3) == 128  && *(cdp - 4) == 128)
       {
         //0 __ __ 0 - does not change
         if ((decode_tacts[bt - btt] == 0 || decode_tacts[bt - btt] == 3) && (decode_tacts[bt - btt - 4] == 0 || decode_tacts[bt - btt - 4] == 4))
@@ -998,7 +1041,7 @@ int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per
 	 if (*(cdp - 2) > 128) *cdp += 1;
 	 if (*(cdp - 2) < 128) *cdp -= 1;
 	}
-	else 
+	else
 	{
         //1 __ __ 0 or 0 __ __ 1- changes
 	 if (*(cdp - 2) > 128) *cdp -= 1;
@@ -1028,14 +1071,14 @@ int Oregon_NR::get_data(int btt, byte p_ver, byte* cdptr){ //btt - an offset per
 //dtl - pointer to the number of clock cycles read
 //---------------------------------------------------------------------------------------------------
 int Oregon_NR::collect(byte* cdptr){
-  
+
   bool cdp_prev_null;
   byte* cdp = cdptr;
   byte nulls_found = 0;
   int bt2 = 0;
 //-----------------------------------------------------
   //We start recording from this moment (end of the last impulse of the hook + 1/16 bar)
-  if (ver == 2) 
+  if (ver == 2)
   {
     pre_marker += 946; //two bars
     *cdp = 0x87;   //The first two bars are known - 11. We caught the impulse!
@@ -1046,7 +1089,7 @@ int Oregon_NR::collect(byte* cdptr){
   {
     pre_marker += 1434; //three bars
     *cdp = 0x07;       //The first four bars are known - 0101. We caught the impulse!
-    *(cdp + 1) = 0x07;  
+    *(cdp + 1) = 0x07;
     cdp += 2;
   }
 
@@ -1055,7 +1098,7 @@ int Oregon_NR::collect(byte* cdptr){
   //The maximum length of a link for v3 is 104BITs, THN132 is 76BITs + at least 3 bits 111, which we have already found
   int bt;
 
-  for (bt = 0 ; bt < no_read_tacts; bt++) {        
+  for (bt = 0 ; bt < no_read_tacts; bt++) {
     *cdp = 0;
     for (byte ckl = 0; ckl < 8; ckl++) {            //We read 8 times in half a beat
       pre_marker += 61;
@@ -1071,8 +1114,8 @@ int Oregon_NR::collect(byte* cdptr){
     bt2++;
     //Ideal period 976.5625
     //Every 7 clock cycles add 4μs to align the period from 976μs to 976.5714μs + 0.009%
-    if (bt2 == 7) 
-    { 
+    if (bt2 == 7)
+    {
       pre_marker += (4 + timing_correction) ;
       bt2 = 0;
     }
@@ -1107,11 +1150,11 @@ int Oregon_NR::collect(byte* cdptr){
     //---------------------------------------------
     //We are waiting for the time of the next half-bar to arrive
 
-    while (micros() < pre_marker);                    
+    while (micros() < pre_marker);
   }
     yield();
   return bt;
-} 
+}
 //---------------------------------------------------------------------------------------------------
 //Determining the offset of packets relative to each other
 //Pointers to data arrays are passed as parameters
@@ -1119,7 +1162,7 @@ int Oregon_NR::collect(byte* cdptr){
 //> 0 - second batch started earlier, <0 - first batch started earlier
 //---------------------------------------------------------------------------------------------------
 int Oregon_NR::correlate_data(byte* ser1, byte* ser2){
-  
+
   byte best_correl = 0;
   int best_shift = 0;
   byte best_correl_back = 0;
@@ -1148,16 +1191,16 @@ int Oregon_NR::correlate_data(byte* ser1, byte* ser2){
       best_shift = i;
     }
   }
- 
+
 //Now, on the contrary, the third packet relative to the first
-  
+
   byte* s1t = ser1;
   for (int sht = 0; sht < no_read_bits; sht++){
     s2 = ser2;
     s1 = s1t;
     shift_score[sht] = 0;
     for (int sp = 0; sp < no_read_bits-sht; sp++){
-      
+
       if ((*s1 > (128+1) && *s2 > (128+1))||(*s1 < (128-1) && *s2 < (128-1)) ) shift_score[sht]++;
       s2++;
       s1++;
@@ -1166,9 +1209,9 @@ int Oregon_NR::correlate_data(byte* ser1, byte* ser2){
     s1t++;
   }
 //Looking for the best match for both options
-    
+
   for (int i = 0; i < no_read_bits; i++){
-    
+
     if (shift_score[i] > best_correl_back){
       best_correl_back = shift_score[i];
       best_shift_back = i;
@@ -1214,12 +1257,12 @@ void Oregon_NR::assemble_data(byte* m1, byte* m2, int shift){
 }
 //---------------------------------------------------------------------------------------------------
 //Returns the position of the sync in the parcel. 0xFF - no sync
-// 
+//
 //code - a pointer to the decrypted bit sequence
 //result - a pointer to a code message
 //---------------------------------------------------------------------------------------------------
 int Oregon_NR::get_synchro_pos(byte* code){
-  
+
   bool syn_found = false;
   byte* cp = code;
   int i = 0;
@@ -1233,14 +1276,14 @@ int Oregon_NR::get_synchro_pos(byte* code){
       syn_found = true;
       break;
     }
-    
+
     cp++;
   }
   if (!syn_found) return 0xFF;
   //The sequence was found, but you need to make sure that before this comes perambula, that is, confident units
   //There can be no zeros in the preamble! is the main thing
   //The preamble should be viewed 16-3 u003d 13 bits back. Well, at least 10 !!!
-  
+
   for (byte g = i; i - g < 10 && g > 0; g --){
     cp --;
     if (*cp < 127) return 0xFF; //There can be no sure zero before sync in the preamble. There is no synchronicity here!
@@ -1266,21 +1309,21 @@ int Oregon_NR::get_info_data(byte* code, byte* result, byte* valid){
   }
   rd = result;
   vd = valid;
-  
+
   int csm;
   for (csm = 0; csm < 30; csm++){
     if ( !consist_synchro && (*code < 128 && *(code + 1) > 128 && *(code + 2) < 128 && *(code + 3) > 128)) break; //Sequence 0101 found
-    if (  consist_synchro && (*code < 127 && *(code + 1) > 129 && *(code + 2) < 127 && *(code + 3) > 129)) break; 
+    if (  consist_synchro && (*code < 127 && *(code + 1) > 129 && *(code + 2) < 127 && *(code + 3) > 129)) break;
     code++;
   }
   //Synchronous in the first 20 bits was not found, such a packet cannot be decrypted in the second version of the protocol!
-//  if (ver == 2 && csm > 22) return 0; 
+//  if (ver == 2 && csm > 22) return 0;
   //For the third version of the protocol, the figure is different
-//  if (ver == 3 && csm > 30) return 0; 
+//  if (ver == 3 && csm > 30) return 0;
   //Go to the beginning of reading
   code += 4;
   int ii = 0;
-  for (int i = 0; i < no_read_bits - csm; i++) 
+  for (int i = 0; i < no_read_bits - csm; i++)
   {
     //In order not to go beyond
     if (i >= packet_length * 4 || (ver == 2 && i > result_size / 2 - csm - 4) || (ver == 3 && i > result_size - csm - 4)) break;
@@ -1325,7 +1368,7 @@ float Oregon_NR::get_temperature(byte* oregon_data){
 
   float tmprt = 0;
   if (((sens_type & 0x0FFF) == RTGN318 ||
-       (sens_type & 0x0FFF) == RTHN318 || 
+       (sens_type & 0x0FFF) == RTHN318 ||
         sens_type == THGR810 ||
         sens_type == THGN132 ||
         sens_type == THGN500 ||
@@ -1360,22 +1403,22 @@ word Oregon_NR::get_sensor(byte* oregon_data){
 byte Oregon_NR::get_channel(byte* oregon_data){
   if (crc_c)
   {
-    byte channel = 0;  
+    byte channel = 0;
 //    word sens_type = get_sensor(oregon_data);
     if (sens_type == THGN132 || sens_type == THN132)
     {
-      switch (*(oregon_data + 4))  
-      {  
-      case 1:  
-        channel = 1;  
-        break;  
-      case 2:  
-        channel = 2;  
-        break;  
-      case 4:  
-        channel = 3;  
-        break;  
-      }  
+      switch (*(oregon_data + 4))
+      {
+      case 1:
+        channel = 1;
+        break;
+      case 2:
+        channel = 2;
+        break;
+      case 4:
+        channel = 3;
+        break;
+      }
     }
     if ((sens_type & 0x0FFF) == RTGN318 ||
         (sens_type & 0x0FFF) == RTHN318 ||
@@ -1385,8 +1428,8 @@ byte Oregon_NR::get_channel(byte* oregon_data){
          sens_type == BTHGN129 ||
          sens_type == BTHR968  ||
          sens_type == THGN500)
-        channel = *(oregon_data + 4);  
-    return channel;  
+        channel = *(oregon_data + 4);
+    return channel;
   }
   else return 0;
 }
@@ -1406,7 +1449,7 @@ byte Oregon_NR::get_battery(byte* oregon_data){
         sens_type == WGR800 ||
         sens_type == PCR800 ||
         sens_type == UVN800) && crc_c)
-  return (*(oregon_data+7) & 0x4) ? 0 : 1;  
+  return (*(oregon_data+7) & 0x4) ? 0 : 1;
   else  return 0;
 }
 //---------------------------------------------------------------------------------------------------
@@ -1569,7 +1612,7 @@ float Oregon_NR::get_total_rain()
 float Oregon_NR::get_rain_rate()
 {
   if (sens_type == PCR800 && crc_c){
-    float tmprt; 
+    float tmprt;
     tmprt += *(packet + 8) * 1000;
     tmprt += *(packet + 9) * 100;
     tmprt += *(packet + 10) * 10;
@@ -1586,7 +1629,7 @@ bool Oregon_NR::check_CRC(byte* oregon_data, word sens_type){
 
   if (sens_type==THN132)
   {
-     return check_oregon_crcsum(oregon_data, 0X07, 0XD6, 16, false) ; 
+     return check_oregon_crcsum(oregon_data, 0X07, 0XD6, 16, false) ;
   }
 
   if (sens_type==THGN132)
@@ -1647,14 +1690,14 @@ bool Oregon_NR::check_CRC(byte* oregon_data, word sens_type){
 
   if (sens_type == THN800)
   {
-     return check_oregon_crcsum(oregon_data, 0X07, 0X00, 16, true) ; 
+     return check_oregon_crcsum(oregon_data, 0X07, 0X00, 16, true) ;
   }
 
 #ifdef ADD_SENS_SUPPORT == 1
 
   if ((sens_type & 0xFF00) == GAS || (sens_type & 0xFF00) == THP || (sens_type & 0xFF00) == FIRE || (sens_type & 0xFF00) == CURRENT  || (sens_type & 0xFF00) == CAPRAIN)
   {
-    return check_own_crcsum(oregon_data, 19) ; 
+    return check_own_crcsum(oregon_data, 19) ;
   }
 
 #endif
@@ -1680,21 +1723,21 @@ bool Oregon_NR::check_oregon_crcsum(byte* oregon_data, byte CCIT_POLY, byte CCIT
     if ( v3 || (x != 5 && x != 6))
     {
       crc ^= *pp;
-      for(byte i = 0; i < 4; i++) 
+      for(byte i = 0; i < 4; i++)
         if(crc & 0x80) crc = (crc << 1) ^ CCIT_POLY;
         else crc <<= 1;
     }
-    pp++;  
+    pp++;
   }
 
-  for(byte i = 0; i < 4; i++) 
+  for(byte i = 0; i < 4; i++)
     if(crc & 0x80) crc = (crc << 1) ^ CCIT_POLY;
     else crc <<= 1;
 
   recived_cksum = *pp + *(pp + 1)*0x10;
   recived_crc = *(pp + 2) + *(pp + 3)*0x10;
   yield();
-  return (recived_crc == crc && recived_cksum == cksum)? 1 : 0;  
+  return (recived_crc == crc && recived_cksum == cksum)? 1 : 0;
 }
 //---------------------------------------------------------------------------------------------------
 //Procedure for calculating CRC8 and checksum for Oregon sensors
@@ -1712,17 +1755,17 @@ bool Oregon_NR::check_own_crcsum(byte* oregon_data, byte p_length)
   {
     cksum += *pp;
     crc ^= *pp;
-    for(byte i = 0; i < 4; i++) 
+    for(byte i = 0; i < 4; i++)
       if(crc & 0x80) crc = (crc << 1) ^ 7;
       else crc <<= 1;
-    pp++;  
+    pp++;
   }
-  for(byte i = 0; i < 4; i++) 
+  for(byte i = 0; i < 4; i++)
     if(crc & 0x80) crc = (crc << 1) ^ 7;
     else crc <<= 1;
   recived_cksum = *pp + *(pp + 1)*0x10;
   recived_crc = *(pp + 2) + *(pp + 3)*0x10;
-  return (recived_crc == crc && recived_cksum == cksum)? 1 : 0;  
+  return (recived_crc == crc && recived_cksum == cksum)? 1 : 0;
 }
 
 
@@ -1730,20 +1773,20 @@ bool Oregon_NR::check_own_crcsum(byte* oregon_data, byte p_length)
 //Data recovery by sensor type
 //---------------------------------------------------------------------------------------------------
 void Oregon_NR::restore_data(byte* oregon_data, word sens_type){
-  
+
   byte* pp=oregon_data;
   if (sens_type==THGN132){
     pp+=8;
     for(int x=0; x<6; x++){
       if(*pp>9 && x!=3) *pp-=8;
-      pp++;  
+      pp++;
     }
   }
   if (sens_type==THN132|| sens_type == THN800){
     pp+=8;
     for(int x=0; x<3; x++){
       if(*pp>9) *pp-=8;
-      pp++;  
+      pp++;
     }
   }
   return;
@@ -1752,7 +1795,7 @@ void Oregon_NR::restore_data(byte* oregon_data, word sens_type){
 
 //---------------------------------------------------------------------------------------------------
 void Oregon_NR::led_light(bool led_on) {
-  if (LED != 0xFF) { 
+  if (LED != 0xFF) {
     if (PULL_UP && led_on) digitalWrite(LED, LOW);
     if (PULL_UP && !led_on) digitalWrite(LED, HIGH);
     if (!PULL_UP && led_on) digitalWrite(LED, HIGH);

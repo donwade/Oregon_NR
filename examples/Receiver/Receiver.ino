@@ -12,10 +12,9 @@ void setupFS();
 #define ST1004 0x54321
 #endif
 
-// need to know which of N temperature sensors is outside (for windchill)
-#define OUTSIDE_TMPID 0xF5
-#define OUTSIDE_WGRID 0xF0  // I have 2. This is the one I want for wind speed
+QueueHandle_t DATA_DIO2queue = NULL;
 
+#define L1_DUMPWIDTH 30
 
 //---------------------------------------
 typedef struct tempStat_s {
@@ -88,10 +87,11 @@ float windchill (float speed, float temperature)
 
 //---------------------------------------
 #define DUMB433RxPin 34  // was 13 but ttgo SD card takes 12,13,14
+#define ESP_LED 25
 
 #if defined ( ESP8266 ) || ( ESP32 )//For Wemos
   Oregon_NR oregon(DUMB433RxPin, DUMB433RxPin,          //receiver on pin
-                        2, true,    //The LED on D2 is pulled up to + pit (true). If the LED is not needed, then the pin number is 255
+                        ESP_LED, true,    //The LED on D2 is pulled up to + pit (true). If the LED is not needed, then the pin number is 255
                         50, true);  //Buffer for receiving a parcel from 50 nibls, package assembly for v2 is included
 
 #else                               //For AVR
@@ -105,40 +105,28 @@ float windchill (float speed, float temperature)
 //---------------------------------------
 void die(char *msg)
 {
-    Serial.println(msg);
-    do yield();
-    while(true);
+    Serial.printf("%s: %s\n", __FUNCTION__, msg);
+    delay(1000);
+    vTaskSuspend(NULL);
 }
 //---------------------------------------
-#define MAX_WIDTH 30
-
-void setup() {
-   Serial.begin(115200);
-   Serial.println();
-   if (oregon.no_memory)
-   {
-    die("NO MEMORY");   //Out of memory
-   }
-
-  delay(1000);
-  Serial.println("OK");
-
-  setupWiFi();  // setup the time first.
-  setupFS();
-
-  //turn on listening to the radio channel
-  oregon.start();
-  oregon.receiver_dump = 0;       //true - Turns on "oscilloscope" - display of data received from the receiver
+void loop()
+{
+    die("main loop silenced");
 }
-
 //---------------------------------------
 
-void loop() {
+void loopOregon() {
   char lead[80];
 
   time_t now;
   time(&now);
   struct tm timeinfo;
+
+  if(!getLocalTime(&timeinfo)){
+    die("Failed to obtain time");
+    return;
+  }
 
   //Capturing a packet
   oregon.capture(false); // output service information to Serial
@@ -147,11 +135,6 @@ void loop() {
   //Processing the received package
 
   if (oregon.captured && oregon.sens_type)  {
-
-    if(!getLocalTime(&timeinfo)){
-      die("Failed to obtain time");
-      return;
-    }
 
     struct tm  qtime;
     char  cNowTime[80];
@@ -162,7 +145,7 @@ void loop() {
     //strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
     strftime(cNowTime, sizeof(cNowTime), "%b %d %H:%M:%S", &qtime);
 
-    //Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+    Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
     sprintf( lead, "%d %s", now, cNowTime);
 
     //Outputting information to Serial
@@ -173,7 +156,7 @@ void loop() {
     cDump[0] = '\0';
 
     int16_t tlen = 0;
-    for (int q = 0;q < min(oregon.packet_length, MAX_WIDTH); q++)
+    for (int q = 0;q < min(oregon.packet_length, L1_DUMPWIDTH); q++)
     {
       if (oregon.valid_p[q] == 0x0F)
       {
@@ -468,4 +451,114 @@ void loop() {
   }
   yield();
 }
+
+//-------------------------------------------------------------
+void OnDIO2DataISR(void)
+{
+#if 0
+    AMessage RxMessage;
+    bool lastState;
+    bool bGlitchSmooth;
+    static unsigned long dataChangeCtr;
+    static unsigned long lastIrqTime;
+
+    static long diffTime;
+
+    if (bGlitchSmooth)
+    {
+        bGlitchSmooth = false;
+        return;
+    }
+    unsigned long now = micros();
+
+    lastState = !digitalRead(DIO2);
+
+
+    RxMessage.absTime = now;
+    RxMessage.changeCnt = dataChangeCtr;
+    dataChangeCtr++;
+
+    RxMessage.bPinState = lastState;
+
+    diffTime = now - lastIrqTime;
+    if (diffTime < 80)
+    {
+        bGlitchSmooth = true;
+        return;  // noise spike. Ignore
+    }
+
+    RxMessage.diffTime = diffTime;
+
+    lastIrqTime = now;
+
+    RxMessage.dbit = classifyInISR(RxMessage.diffTime, lastState);
+    RxMessage.bIsData = search4DataInISR(RxMessage.dbit, RxMessage.diffTime);
+
+    //digitalWrite(GREEN_LED, !lastState);  // led reflects current state.
+
+    if (DATA_DIO2queue) xQueueSendToBackFromISR(DATA_DIO2queue, &RxMessage, NULL);
+#endif
+}
+
+//---------------------------------------
+void TaskOregon(void *notUsed)
+{
+    Serial.printf("%s start\n", __FUNCTION__);
+    while(true)
+    {
+        loopOregon(); yield();
+    }
+}
+//---------------------------------------
+extern void histReport(void *);
+
+void setupOregon()
+{
+    //turn on listening to the radio channel
+    oregon.start();
+    oregon.receiver_dump = 0;       //true - Turns on "oscilloscope" - display of data received from the receiver
+
+    DATA_DIO2queue = xQueueCreate(200, sizeof(AMessage));
+
+    xTaskCreatePinnedToCore(
+                    TaskOregon,       /* Function to implement the task */
+                    "TaskOregon",      /* Name of the task */
+                    20000,           /* Stack size in words */
+                    (void *)0,      /* Task input parameter */
+                    0,               /* Priority of the task */
+                    NULL,            /* Task handle. */
+                    1);              /* Core where the task should run */
+#if 0
+    xTaskCreatePinnedToCore(
+                    histReport,    /* Function to implement the task */
+                    "Reporter",     /* Name of the task */
+                    5000,           /* Stack size in words */
+                    (void *)0,      /* Task input parameter */
+                    0,              /* Priority of the task */
+                    NULL,           /* Task handle. */
+                    1);             /* Core where the task should run */
+#endif
+
+    Serial.printf("%s done\n", __FUNCTION__);
+}
+//---------------------------------------
+
+void setup() {
+   Serial.begin(115200);
+   Serial.println();
+   if (oregon.no_memory)
+   {
+    die("NO MEMORY");   //Out of memory
+   }
+
+  delay(1000);
+  Serial.println("OK");
+
+  setupWiFi();  // setup the time first.
+  setupFS();
+  setupOregon();
+
+}
+
+
 
